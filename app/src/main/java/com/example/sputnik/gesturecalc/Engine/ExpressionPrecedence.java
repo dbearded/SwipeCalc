@@ -5,8 +5,12 @@ package com.example.sputnik.gesturecalc.Engine;
  */
 
 enum ExpressionPrecedence {
-
-    HIGHEST, HIGH, MEDIUM, LOW, NUMBER
-
-
+    /*
+    LOWEST ->   Addition / subtraction
+    LOW ->      Multiplication / Division
+    MEDIUM ->   Unary multiplication (%, negation)
+    HIGH ->     Exponent
+    HIGHEST ->  TBD
+     */
+    LOWEST, LOW, MEDIUM, HIGH, HIGHEST, NUMBER
 }

@@ -1,20 +1,27 @@
 package com.example.sputnik.gesturecalc.Engine;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 
 /**
  * Created by Sputnik on 1/24/2018.
  */
 
-class AdditionOperator extends BinaryOperation{
+class AdditionOperator extends BinaryOperator {
 
-    static {
+    AdditionOperator(){
         symbol = MathSymbol.PLUS;
-        precedence = ExpressionPrecedence.LOW;
+        precedence = ExpressionPrecedence.LOWEST;
+        mathContext = new MathContext(0);
     }
 
     @Override
-    public BigDecimal operate() {
-        return leftOperand.add(rightOperand);
+    BigDecimal operate(BigDecimal leftOperand, BigDecimal rightOperand) {
+        return leftOperand.add(rightOperand, mathContext);
+    }
+
+    @Override
+    void setMathContext(MathContext mathContext) {
+        this.mathContext = mathContext;
     }
 }
