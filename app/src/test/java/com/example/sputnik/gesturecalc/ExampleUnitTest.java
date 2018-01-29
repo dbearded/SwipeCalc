@@ -138,6 +138,7 @@ public class ExampleUnitTest {
         StringBuilder builder = new StringBuilder(size*2-1);
         MathContext mathContext = new MathContext(14, RoundingMode.HALF_EVEN);
         BigDecimal result = new BigDecimal(0, mathContext);
+        DecimalFormat decimalFormat = new DecimalFormat("0.##############");
         String expressionOutput = null;
         for (int i = 0; i < input.length; i++) {
             input[i] = ((double) random.nextInt(1000)) * random.nextDouble();
@@ -153,7 +154,7 @@ public class ExampleUnitTest {
         }
         try {
             expressionOutput = Expression.evaluateInput(builder.toString());
-            assertEquals(result.toString(), expressionOutput);
+            assertEquals(decimalFormat.format(result), expressionOutput);
         } catch (AssertionError cf){
             throw new ComparisonFailure(cf.getMessage() + "test did not work with given input: " + builder.toString(), result.toString(), expressionOutput);
         }
@@ -254,9 +255,11 @@ public class ExampleUnitTest {
 
     @Test
     public void negation_isCorrect() throws Exception{
-        assertEquals("-1", Expression.evaluateInput("-1"));
+        /*assertEquals("-1", Expression.evaluateInput("-1"));
         assertEquals("-5", Expression.evaluateInput("-5.00"));
-        assertEquals("-3.14", Expression.evaluateInput("-3.14"));
+        assertEquals("-3.14", Expression.evaluateInput("-3.14"));*/
+        assertEquals("3.14", Expression.evaluateInput("--3.14"));
+        assertEquals("-3.14", Expression.evaluateInput("---3.14"));
     }
 
     @Test
@@ -284,8 +287,9 @@ public class ExampleUnitTest {
 
     @Test
     public void non_grouped_expression_isCorrect() throws Exception{
-        assertEquals("-98.15", Expression.evaluateInput("-3.1+5+-4*26-5%+-1+25/5"));
+        /*assertEquals("-98.15", Expression.evaluateInput("-3.1+5+-4*26-5%+-1+25/5"));
         assertEquals("109.05", Expression.evaluateInput("3+5*6+4*23-14+-2+5%"));
-        assertEquals("2", Expression.evaluateInput("1--1"));
+        assertEquals("2", Expression.evaluateInput("1--1"));*/
+        assertEquals("2", Expression.evaluateInput("1----1"));
     }
 }

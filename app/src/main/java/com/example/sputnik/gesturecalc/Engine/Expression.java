@@ -18,30 +18,43 @@ public class Expression {
     private static EnumSet<MathSymbol> postUnaryOperators = EnumSet.of(MathSymbol.PERCENT, MathSymbol.NEGATE);
     private static EnumSet<MathSymbol> binaryOperators = EnumSet.range(MathSymbol.PLUS, MathSymbol.DIVIDE);
     private static EnumSet<MathSymbol> noChaining = EnumSet.of(MathSymbol.MINUS, MathSymbol.NEGATE);
-    private static EnumSet<MathSymbol> toggle = EnumSet.of(MathSymbol.NEGATE);
+    private static EnumSet<MathSymbol> toggle = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
     private ExpressionNode head;
     private ExpressionNode previous;
     private StringBuilder numberBuilder = new StringBuilder();
     private MathContext mathContext = new MathContext(14, RoundingMode.HALF_EVEN);
     private DecimalFormat decimalFormat = new DecimalFormat("0.##############");
 
-    abstract class ExpressionNode {
+    private static abstract class ExpressionNode {
+        enum ExpressionType {
+            UNARY_PRE, UNARY_POST, BINARY, NUMBER
+        }
         protected ExpressionNode[] children;
         protected ExpressionNode parent;
         protected BigDecimal number;
         protected ExpressionPrecedence precedence;
+        protected ExpressionType type;
+
+        ExpressionNode(ExpressionType type){
+            this.type = type;
+        }
 
         abstract void evaluate();
     }
 
-    class BinaryOperatorNode extends ExpressionNode {
+    private static class BinaryOperatorNode extends ExpressionNode {
 
         private BinaryOperator operator;
 
         BinaryOperatorNode(BinaryOperator binaryOperator) {
+            super(ExpressionType.BINARY);
             this.operator = binaryOperator;
             children = new ExpressionNode[2];
             precedence = operator.precedence;
+        }
+
+        BinaryOperatorNode(BinaryOperator binaryOperator, MathContext mathContext){
+            this(binaryOperator);
             this.operator.setMathContext(mathContext);
         }
 
@@ -64,17 +77,26 @@ public class Expression {
         }
     }
 
-    class UnaryOperatorNode extends ExpressionNode {
+    private static class UnaryOperatorNode extends ExpressionNode {
 
         private UnaryOperator operator;
 
         UnaryOperatorNode(UnaryOperator operator) {
+            // Default to PRE and change if needed after construction
+            super(ExpressionType.UNARY_PRE);
             this.operator = operator;
             // Unary type has two slots to store a child. [0] represents a left child for a
             // Post Unary Operator  and [1] represents a right child for a Pre Unary Operator
             // (in-order traversal LR)
             children = new ExpressionNode[2];
             precedence = operator.precedence;
+            if (operator.unaryType.equals(UnaryOperator.UnaryType.POST)){
+                this.type = ExpressionType.UNARY_POST;
+            }
+        }
+
+        UnaryOperatorNode(UnaryOperator operator, MathContext mathContext){
+            this(operator);
             this.operator.setMathContext(mathContext);
         }
 
@@ -84,15 +106,15 @@ public class Expression {
 
         @Override
         void evaluate() {
-            switch (operator.unaryType) {
-                case POST:
+            switch (type) {
+                case UNARY_POST:
                     if (children[0] != null && children[0].number != null) {
                         number = operator.operate(children[0].number);
                     } else {
                         number = null;
                     }
                     break;
-                case PRE:
+                case UNARY_PRE:
                     if (children[1] != null && children[1].number != null) {
                         number = operator.operate(children[1].number);
                     } else {
@@ -108,12 +130,19 @@ public class Expression {
         }
     }
 
-    class NumberNode extends ExpressionNode {
+    private static class NumberNode extends ExpressionNode {
+        private DecimalFormat decimalFormat;
 
         NumberNode(BigDecimal number) {
+            super(ExpressionType.NUMBER);
             this.number = number;
             precedence = ExpressionPrecedence.NUMBER;
             children = new ExpressionNode[2];
+        }
+
+        NumberNode(BigDecimal number, DecimalFormat format){
+            this(number);
+            this.decimalFormat = format;
         }
 
         @Override
@@ -180,7 +209,7 @@ public class Expression {
             add(symbol, false, false); // For testing
 //            add(symbol, false, false); // When testing is finished, use this instead
         }
-        forceEvaluate();
+//        forceEvaluate();
     }
 
     public void add(MathSymbol symbol){
@@ -200,17 +229,9 @@ public class Expression {
                 updateNumberNode(symbol, (NumberNode) previous);
             } else {
                 // If the symbol undoes the previous symbol (negate)
-                if (head !=null && toggle.contains(symbol) && !(previous instanceof NumberNode)) {
-                    MathSymbol prevSymbol;
-                    if (previous instanceof BinaryOperatorNode) {
-                        prevSymbol = ((BinaryOperatorNode) previous).getSymbol();
-                    } else {
-                        prevSymbol = ((UnaryOperatorNode) previous).getSymbol();
-                    }
-                    if (toggle.contains(prevSymbol)) {
-                        deleteNode(previous);
-                        return;
-                    }
+                if (head !=null && toggle.contains(symbol) && (previous.type.equals(ExpressionNode.ExpressionType.UNARY_PRE))) {
+                    deleteNode(previous);
+                    return;
                 }
                 // Generate a new node.
                 addNode(symbol);
@@ -261,6 +282,7 @@ public class Expression {
         return treeToString(head, new StringBuilder()).toString();
     }
 
+    // TODO make a comment that maps previous to potential
     ExpressionNode createNode(ExpressionNode previous, MathSymbol symbol) {
         // This class returns the appropriate ExpressionNode subclass based on the
         // the input symbol and the previous ExpressionNode, which is needed for context.
@@ -269,66 +291,62 @@ public class Expression {
         if (previous == null) {
             if (numerals.contains(symbol)) {
                 if (symbol.equals(MathSymbol.DECIMAL)){
-                    return new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext));
+                    return new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
                 }
-                return new NumberNode(new BigDecimal(symbol.toString(), mathContext));
+                return new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
             } else if (preUnaryOperators.contains(symbol)) {
-                return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol));
+                return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
             }
-        }
-        // If the previous node was a Unary Operator
-        else if (previous instanceof UnaryOperatorNode) {
-            // If previous node was a Pre Unary Operator
-            if (((UnaryOperatorNode) previous).operator.unaryType.equals(UnaryOperator.UnaryType.PRE)) {
-                // If the node to be added is a number
-                if (numerals.contains(symbol)) {
-                    if (symbol.equals(MathSymbol.DECIMAL)){
-                        return new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext));
+        } else {
+            switch (previous.type){
+                case UNARY_PRE:
+                    // If the node to be added is a number
+                    if (numerals.contains(symbol)) {
+                        if (symbol.equals(MathSymbol.DECIMAL)){
+                            return new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                        }
+                        return new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
                     }
-                    return new NumberNode(new BigDecimal(symbol.toString(), mathContext));
-                }
-                // If the node to be added is a PreUnary Operator that can be chained
-                else if (preUnaryOperators.contains(symbol) && !noChaining.contains(symbol)) {
-                    return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol));
-                }
-            }
-            // If previous node was a Post Unary Operator
-            else if (((UnaryOperatorNode) previous).operator.unaryType.equals(UnaryOperator.UnaryType.POST)) {
-                // If the node to be added is a Binary Operator
-                if (binaryOperators.contains(symbol)) {
-                    return new BinaryOperatorNode(new BinaryOperatorFactory().getBinaryOperator(symbol));
-                }
-                // If the node to be added is a Post Unary Operator
-                else if (postUnaryOperators.contains(symbol) && !noChaining.contains(symbol)) {
-                    return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol));
-                }
-            }
-            throw new IllegalArgumentException("Could not create node from symbol: " + symbol.toString());
-        }
-        // If the previous node was a Binary Operator
-        else if (previous instanceof BinaryOperatorNode) {
-            // If the node to be added is a number
-            if (numerals.contains(symbol)) {
-                if (symbol.equals(MathSymbol.DECIMAL)){
-                    return new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext));
-                }
-                return new NumberNode(new BigDecimal(symbol.toString(), mathContext));
-            }
-            // If the node to be added is a Pre Unary Operator
-            else if (preUnaryOperators.contains(symbol)) {
-                return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol));
-            }
-        }
-        // If the previous node was a Number
-        else if (previous instanceof NumberNode) {
-
-            // If the node to be added is a Post Unary Operator
-            if (postUnaryOperators.contains(symbol)) {
-                return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol));
-            }
-            // If the node to be added is a Binary Operator
-            else if (binaryOperators.contains(symbol)) {
-                return new BinaryOperatorNode(new BinaryOperatorFactory().getBinaryOperator(symbol));
+                    // If the node to be added is a PreUnary Operator that can be chained
+                    else if (preUnaryOperators.contains(symbol) && !noChaining.contains(symbol)) {
+                        return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+                    }
+                    break;
+                case UNARY_POST:
+                    // If the node to be added is a Binary Operator
+                    if (binaryOperators.contains(symbol)) {
+                        return new BinaryOperatorNode(new BinaryOperatorFactory().getBinaryOperator(symbol), mathContext);
+                    }
+                    // If the node to be added is a Post Unary Operator
+                    else if (postUnaryOperators.contains(symbol) && !noChaining.contains(symbol)) {
+                        return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+                    }
+                    break;
+                case BINARY:
+                    // If the node to be added is a number
+                    if (numerals.contains(symbol)) {
+                        if (symbol.equals(MathSymbol.DECIMAL)){
+                            return new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                        }
+                        return new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
+                    }
+                    // If the node to be added is a Pre Unary Operator
+                    else if (preUnaryOperators.contains(symbol)) {
+                        return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+                    }
+                    break;
+                case NUMBER:
+                    // If the node to be added is a Post Unary Operator
+                    if (postUnaryOperators.contains(symbol)) {
+                        return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+                    }
+                    // If the node to be added is a Binary Operator
+                    else if (binaryOperators.contains(symbol)) {
+                        return new BinaryOperatorNode(new BinaryOperatorFactory().getBinaryOperator(symbol), mathContext);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
         return null;
@@ -341,7 +359,6 @@ public class Expression {
      */
     private void addNode(MathSymbol symbol) {
         ExpressionNode node = createNode(previous, symbol);
-
         // First node in expression tree
         if (previous == null) {
             head = node;
@@ -351,16 +368,21 @@ public class Expression {
             }
             return;
         }
-        if (node instanceof NumberNode) {
-            fillNodeBelow(node, previous);
-            previous = node;
-            numberBuilder.append(symbol);
-        } else {
-            ExpressionNode refNode;
-            refNode = findPositionUp(node, previous);
-            insertOperatorNode(node, refNode);
-            previous = node;
-            numberBuilder.setLength(0);
+        switch (node.type){
+            case BINARY:
+            case UNARY_PRE:
+            case UNARY_POST:
+                ExpressionNode refNode;
+                refNode = findPositionUp(node, previous);
+                insertOperatorNode(node, refNode);
+                previous = node;
+                numberBuilder.setLength(0);
+                break;
+            case NUMBER:
+                fillNodeBelow(node, previous);
+                previous = node;
+                numberBuilder.append(symbol);
+                break;
         }
     }
 
@@ -408,39 +430,26 @@ public class Expression {
      * @param pushedNode reference node that the new node is inserted around (above for Post Unary and Binary; below for Pre Unary)
      */
     private void insertOperatorNode(@NonNull ExpressionNode newNode, @NonNull ExpressionNode pushedNode) {
-        if (newNode instanceof BinaryOperatorNode) {
-            newNode.children[0] = pushedNode;
-            newNode.parent = pushedNode.parent;
-            pushedNode.parent = newNode;
-            if (newNode.parent == null){
-                head = newNode;
-            } else {
-                int i = 0;
-                while (!newNode.parent.children[i].equals(pushedNode)){
-                    i++;
-                }
-                newNode.parent.children[i] = newNode;
-            }
-        } else if (newNode instanceof UnaryOperatorNode) {
-            UnaryOperator.UnaryType type = ((UnaryOperatorNode) newNode).operator.unaryType;
-            switch (type) {
-                case POST:
-                    newNode.children[0] = pushedNode;
-                    newNode.parent = pushedNode.parent;
-                    pushedNode.parent = newNode;
-                    if (newNode.parent == null){
-                        head = newNode;
-                    } else {
-                        int i = 0;
-                        while (!newNode.parent.children[i].equals(pushedNode)){
-                            i++;
-                        }
-                        newNode.parent.children[i] = newNode;
+
+        switch (newNode.type){
+            case BINARY:
+            case UNARY_POST:
+                newNode.children[0] = pushedNode;
+                newNode.parent = pushedNode.parent;
+                pushedNode.parent = newNode;
+                if (newNode.parent == null){
+                    head = newNode;
+                } else {
+                    int i = 0;
+                    while (!newNode.parent.children[i].equals(pushedNode)){
+                        i++;
                     }
-                    break;
-                case PRE:
-                    fillNodeBelow(newNode, pushedNode);
-            }
+                    newNode.parent.children[i] = newNode;
+                }
+                break;
+            case UNARY_PRE:
+                fillNodeBelow(newNode, pushedNode);
+                break;
         }
     }
 
@@ -481,27 +490,14 @@ public class Expression {
         if (refNode == null){
             refNode = previous;
         }
-        // Insert the node into the tree
-        if (refNode instanceof BinaryOperatorNode) {
-            /*if (!(refNode.children[1] == null)) {
-                throw new IllegalArgumentException(refNode.getClass() + " had no empty children fill");
-            }*/
-            refNode.children[1] = newNode;
-        } else if (refNode instanceof UnaryOperatorNode) {
-            switch (((UnaryOperatorNode) refNode).operator.unaryType) {
-                case PRE:
-                    /*if (!(refNode.children[1] == null)) {
-                        throw new IllegalArgumentException(refNode.getClass() + " had no empty children fill");
-                    }*/
-                    refNode.children[1] = newNode;
-                    break;
-                case POST:
-                    /*if (!(refNode.children[0] == null)) {
-                        throw new IllegalArgumentException(refNode.getClass() + " had no empty children fill");
-                    }*/
-                    refNode.children[0] = newNode;
-                    break;
-            }
+        switch (refNode.type){
+            case BINARY:
+            case UNARY_PRE:
+                refNode.children[1] = newNode;
+                break;
+            case UNARY_POST:
+                refNode.children[0] = newNode;
+                break;
         }
         newNode.parent = refNode;
     }
@@ -559,45 +555,46 @@ public class Expression {
         // Stitch surrounding nodes together
         int i = 0;
         // node is not root
-        if (!isRoot) {
+        if (isRoot){
+            head = null;
+            previous = null;
+            return;
+        } else {
             while (!node.parent.children[i].equals(node)) {
                 i++;
             }
         }
-        if (node instanceof BinaryOperatorNode) {
-            if (isRoot) {
-                head = node.children[0];
-                head.parent = null;
-            } else {
-                node.parent.children[i] = node.children[0];
-                node.children[0].parent = node.parent;
-            }
-        } else if (node instanceof UnaryOperatorNode) {
-            switch (((UnaryOperatorNode) node).operator.unaryType) {
-                case PRE:
-                    if (isRoot) {
-                        head = node.children[1];
-                        head.parent = null;
-                    } else {
-                        node.parent.children[i] = node.children[1];
-                        node.children[1].parent = node.parent;
-                    }
-                    break;
-                case POST:
-                    if (isRoot) {
-                        head = node.children[0];
-                        head.parent = null;
-                    } else {
-                        node.parent.children[i] = node.children[0];
+
+        switch (node.type){
+            case UNARY_POST:
+            case BINARY:
+                if (isRoot) {
+                    head = node.children[0];
+                    head.parent = null;
+                } else {
+                    node.parent.children[i] = node.children[0];
+                    if (node.children[0] != null) {
                         node.children[0].parent = node.parent;
                     }
-                    break;
-            }
-        } else if (node instanceof NumberNode) {
-            if (isRoot) {
-                head = node.children[0];
-                head.parent = null;
-            }
+                }
+                break;
+            case UNARY_PRE:
+                if (isRoot) {
+                    head = node.children[1];
+                    head.parent = null;
+                } else {
+                    node.parent.children[i] = node.children[1];
+                    if (node.children[1] != null) {
+                        node.children[1].parent = node.parent;
+                    }
+                }
+                break;
+            case NUMBER:
+                if (isRoot) {
+                    head = node.children[0];
+                    head.parent = null;
+                }
+                break;
         }
         // delete node
         node = null;
@@ -619,7 +616,7 @@ public class Expression {
         } else if (runner.children[0] != null) {
             return findNextOldestNode(runner.children[0], refNode);
         } else if (runner.parent != null) {
-            return findNextOldestNode(runner.parent, refNode);
+            return runner.parent;
         } else {
             return null;
         }
