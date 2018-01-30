@@ -206,7 +206,7 @@ public class Expression {
     public void add(MathSymbol... symbols){
         for (MathSymbol symbol :
                 symbols) {
-            add(symbol, false, false); // For testing
+            add(symbol, false, true); // For testing
 //            add(symbol, false, false); // When testing is finished, use this instead
         }
 //        forceEvaluate();
@@ -226,7 +226,7 @@ public class Expression {
         // numeral to previous node, not create a new number node.
         try {
             if (numerals.contains(symbol) && (numberBuilder.length() > 0)) {
-                updateNumberNode(symbol, (NumberNode) previous);
+                appendToNumberNode(symbol, (NumberNode) previous);
             } else {
                 // If the symbol undoes the previous symbol (negate)
                 if (head !=null && toggle.contains(symbol) && (previous.type.equals(ExpressionNode.ExpressionType.UNARY_PRE))) {
@@ -248,7 +248,21 @@ public class Expression {
     }
 
     public void delete() {
-        deleteNode(previous);
+        // Remove a numeral OR the entire node
+        if (previous.type.equals(ExpressionNode.ExpressionType.NUMBER) && numberBuilder.length() > 1){
+            numberBuilder.deleteCharAt(numberBuilder.length()-1);
+            if (numberBuilder.charAt(numberBuilder.length()-1) == '.'){
+                numberBuilder.deleteCharAt(numberBuilder.length()-1);
+            }
+            previous.number = new BigDecimal(numberBuilder.toString(), mathContext);
+            evaluateToRoot(previous);
+        } else {
+            deleteNode(previous);
+            // Reset numberBuilder
+            if (previous != null && previous.type.equals(ExpressionNode.ExpressionType.NUMBER)){
+                numberBuilder.append(previous.number.toPlainString());
+            }
+        }
     }
 
     /**
@@ -269,6 +283,9 @@ public class Expression {
      * @return updated result of the Expression or null if it cannot be evaluated
      */
     public String getValue() {
+        if (head == null || head.number == null) {
+            return "";
+        }
         return decimalFormat.format(head.number);
     }
 
@@ -279,6 +296,9 @@ public class Expression {
      */
     @Override
     public String toString() {
+        if (head == null){
+            return "";
+        }
         return treeToString(head, new StringBuilder()).toString();
     }
 
@@ -508,7 +528,7 @@ public class Expression {
      * @param symbol symbol to be appened
      * @param node   number node to be updated
      */
-    private void updateNumberNode(MathSymbol symbol, @NonNull NumberNode node) {
+    private void appendToNumberNode(MathSymbol symbol, @NonNull NumberNode node) {
         appendNumeral(symbol);
         node.number = new BigDecimal(numberBuilder.toString(), mathContext);
     }
@@ -554,14 +574,13 @@ public class Expression {
         boolean isRoot = node.parent == null;
         // Stitch surrounding nodes together
         int i = 0;
-        // node is not root
-        if (isRoot){
-            head = null;
-            previous = null;
-            return;
-        } else {
-            while (!node.parent.children[i].equals(node)) {
-                i++;
+        if (!isRoot) {
+            for (i = 0; i < node.children.length; i++) {
+                if (node.parent.children[i] != null) {
+                    if (node.parent.children[i].equals(node)) {
+                        break;
+                    }
+                }
             }
         }
 
@@ -570,7 +589,9 @@ public class Expression {
             case BINARY:
                 if (isRoot) {
                     head = node.children[0];
-                    head.parent = null;
+                    if (head != null) {
+                        head.parent = null;
+                    }
                 } else {
                     node.parent.children[i] = node.children[0];
                     if (node.children[0] != null) {
@@ -581,7 +602,9 @@ public class Expression {
             case UNARY_PRE:
                 if (isRoot) {
                     head = node.children[1];
-                    head.parent = null;
+                    if (head != null) {
+                        head.parent = null;
+                    }
                 } else {
                     node.parent.children[i] = node.children[1];
                     if (node.children[1] != null) {
@@ -592,12 +615,24 @@ public class Expression {
             case NUMBER:
                 if (isRoot) {
                     head = node.children[0];
-                    head.parent = null;
+                    if (head != null) {
+                        head.parent = null;
+                    }
+                } else {
+                    if (node.number.precision() > 1){
+                        String strNum = null;
+                        strNum = node.number.unscaledValue().toString();
+                        node.number = new BigDecimal(strNum.substring(0, strNum.length() - 1), mathContext);
+                    } else {
+                        node.parent.children[i] = null;
+                    }
                 }
+                numberBuilder.setLength(0);
                 break;
         }
         // delete node
         node = null;
+        evaluateToRoot(previous);
     }
 
     /**
@@ -652,6 +687,4 @@ public class Expression {
         node.evaluate();
         evaluateToRoot(node.parent);
     }
-
-
 }

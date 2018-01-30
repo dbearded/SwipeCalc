@@ -29,7 +29,7 @@ public class ExampleUnitTest {
     public void first_operator_node_isCorrect() throws Exception{
         Expression expression = new Expression();
         expression.add(MathSymbol.MINUS);
-        assertEquals("!", expression.toString());
+        assertEquals("-", expression.toString());
     }
 
     @Test
@@ -287,9 +287,91 @@ public class ExampleUnitTest {
 
     @Test
     public void non_grouped_expression_isCorrect() throws Exception{
-        /*assertEquals("-98.15", Expression.evaluateInput("-3.1+5+-4*26-5%+-1+25/5"));
+        assertEquals("-98.15", Expression.evaluateInput("-3.1+5+-4*26-5%+-1+25/5"));
         assertEquals("109.05", Expression.evaluateInput("3+5*6+4*23-14+-2+5%"));
-        assertEquals("2", Expression.evaluateInput("1--1"));*/
+        assertEquals("2", Expression.evaluateInput("1--1"));
         assertEquals("2", Expression.evaluateInput("1----1"));
+    }
+
+    @Test
+    public void delete_isCorrect() throws Exception{
+        Expression expression = new Expression();
+        MathSymbol[] symbols = Expression.stringInputToMathSymbols("-3.1+5+-4*26-5%+-1+25/5");
+        expression.add(symbols);
+        assertEquals("-3.1+5+-4*26-5%+-1+25/5", expression.toString());
+        assertEquals("-98.15", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-5%+-1+25/", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-5%+-1+25", expression.toString());
+        assertEquals("-78.15", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-5%+-1+2", expression.toString());
+        assertEquals("-101.15", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-5%+-1+", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-5%+-1", expression.toString());
+        assertEquals("-103.15", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-5%+-", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-5%+", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-5%", expression.toString());
+        assertEquals("-102.15", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-5", expression.toString());
+        assertEquals("-107.1", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26-", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*26", expression.toString());
+        assertEquals("-102.1", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*2", expression.toString());
+        assertEquals("-6.1", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4*", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-4", expression.toString());
+        assertEquals("-2.1", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+-", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5+", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+5", expression.toString());
+        assertEquals("1.9", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1+", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-3.1", expression.toString());
+        assertEquals("-3.1", expression.getValue());
+        expression.delete();
+        assertEquals("-3", expression.toString());
+        assertEquals("-3", expression.getValue());
+        expression.delete();
+        assertEquals("-", expression.toString());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("", expression.toString());
+        assertEquals("", expression.getValue());
+
+        expression.add(Expression.stringInputToMathSymbols("0.003"));
+        expression.delete();
+        assertEquals("0", expression.toString());
+        expression.add(Expression.stringInputToMathSymbols("3"));
+        assertEquals("0.003", expression.toString());
+        assertEquals("0.003", expression.getValue());
     }
 }
