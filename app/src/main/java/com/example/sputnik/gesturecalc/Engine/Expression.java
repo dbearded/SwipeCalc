@@ -19,11 +19,13 @@ public class Expression {
     private static EnumSet<MathSymbol> binaryOperators = EnumSet.range(MathSymbol.PLUS, MathSymbol.DIVIDE);
     private static EnumSet<MathSymbol> noChaining = EnumSet.of(MathSymbol.MINUS, MathSymbol.NEGATE);
     private static EnumSet<MathSymbol> toggle = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
+    private static EnumSet<MathSymbol> groupingOperators = EnumSet.of(MathSymbol.LEFT_PARENTHESIS, MathSymbol.RIGHT_PARENTHESIS);
     private ExpressionNode head;
     private ExpressionNode previous;
     private StringBuilder numberBuilder = new StringBuilder();
     private MathContext mathContext = new MathContext(14, RoundingMode.HALF_EVEN);
     private DecimalFormat decimalFormat = new DecimalFormat("0.##############");
+    private int groupLevel = 0;
 
     private static abstract class ExpressionNode {
         enum ExpressionType {
@@ -34,6 +36,7 @@ public class Expression {
         protected BigDecimal number;
         protected ExpressionPrecedence precedence;
         protected ExpressionType type;
+        protected int nodeGroupLevel = 0;
 
         ExpressionNode(ExpressionType type){
             this.type = type;
@@ -221,22 +224,23 @@ public class Expression {
     }
 
     private void add(MathSymbol symbol, boolean notifyObservers, boolean evaluate) {
-
-        // If the symbol is a numeral and the previous node is a number, then need to add
-        // numeral to previous node, not create a new number node.
         try {
-            if (numerals.contains(symbol) && (numberBuilder.length() > 0)) {
-                appendToNumberNode(symbol, (NumberNode) previous);
+            // Handle special cases first before adding another node
+            if (numerals.contains(symbol)) {
+                addNumeral(symbol);
+            } else if (groupingOperators.contains(symbol)){
+                handleGroupingSymbol(symbol);
+            } else if (toggle.contains(symbol)){
+                handleToggleSymbol(symbol);
             } else {
-                // If the symbol undoes the previous symbol (negate)
-                if (head !=null && toggle.contains(symbol) && (previous.type.equals(ExpressionNode.ExpressionType.UNARY_PRE))) {
-                    deleteNode(previous);
-                    return;
-                }
-                // Generate a new node.
                 addNode(symbol);
             }
         } catch (RuntimeException e) {
+            System.out.println("attempting to add symbol: " + symbol.toString());
+            System.out.println("grouping level: " + groupLevel);
+            System.out.println("head: " + head.toString());
+            System.out.println("previous: " + previous.toString());
+            System.out.println("expression: " + this.toString());
             e.printStackTrace();
         }
         if (evaluate){
@@ -307,15 +311,18 @@ public class Expression {
         // This class returns the appropriate ExpressionNode subclass based on the
         // the input symbol and the previous ExpressionNode, which is needed for context.
 
+        ExpressionNode expressionNode = null;
+
         // First expression node
         if (previous == null) {
             if (numerals.contains(symbol)) {
                 if (symbol.equals(MathSymbol.DECIMAL)){
-                    return new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                    expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                } else {
+                    expressionNode = new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
                 }
-                return new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
             } else if (preUnaryOperators.contains(symbol)) {
-                return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+                expressionNode = new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
             }
         } else {
             switch (previous.type){
@@ -323,53 +330,96 @@ public class Expression {
                     // If the node to be added is a number
                     if (numerals.contains(symbol)) {
                         if (symbol.equals(MathSymbol.DECIMAL)){
-                            return new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                            expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                        } else {
+                            expressionNode = new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
                         }
-                        return new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
                     }
                     // If the node to be added is a PreUnary Operator that can be chained
                     else if (preUnaryOperators.contains(symbol) && !noChaining.contains(symbol)) {
-                        return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+                        expressionNode = new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
                     }
                     break;
                 case UNARY_POST:
                     // If the node to be added is a Binary Operator
                     if (binaryOperators.contains(symbol)) {
-                        return new BinaryOperatorNode(new BinaryOperatorFactory().getBinaryOperator(symbol), mathContext);
+                        expressionNode = new BinaryOperatorNode(new BinaryOperatorFactory().getBinaryOperator(symbol), mathContext);
                     }
                     // If the node to be added is a Post Unary Operator
                     else if (postUnaryOperators.contains(symbol) && !noChaining.contains(symbol)) {
-                        return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+                        expressionNode = new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
                     }
                     break;
                 case BINARY:
                     // If the node to be added is a number
                     if (numerals.contains(symbol)) {
                         if (symbol.equals(MathSymbol.DECIMAL)){
-                            return new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                            expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                        } else {
+                            expressionNode = new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
                         }
-                        return new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
                     }
                     // If the node to be added is a Pre Unary Operator
                     else if (preUnaryOperators.contains(symbol)) {
-                        return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+                        expressionNode = new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
                     }
                     break;
                 case NUMBER:
                     // If the node to be added is a Post Unary Operator
                     if (postUnaryOperators.contains(symbol)) {
-                        return new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+                        expressionNode = new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
                     }
                     // If the node to be added is a Binary Operator
                     else if (binaryOperators.contains(symbol)) {
-                        return new BinaryOperatorNode(new BinaryOperatorFactory().getBinaryOperator(symbol), mathContext);
+                        expressionNode = new BinaryOperatorNode(new BinaryOperatorFactory().getBinaryOperator(symbol), mathContext);
                     }
                     break;
                 default:
                     break;
             }
         }
-        return null;
+        if (expressionNode != null){
+            expressionNode.nodeGroupLevel = groupLevel;
+        }
+        return expressionNode;
+    }
+
+    private void handleGroupingSymbol(MathSymbol symbol){
+        if (!groupingOperators.contains(symbol)){
+            throw new IllegalArgumentException("Argument not part of grouping symbols: " + symbol.toString());
+        }
+        if (previous == null){
+            groupLevel++;
+            return;
+        }
+        switch (previous.type){
+            case BINARY:
+            case UNARY_PRE:
+                groupLevel++;
+                break;
+            case NUMBER:
+            case UNARY_POST:
+                if (groupLevel > 0){
+                    groupLevel--;
+                } else {
+                    add(MathSymbol.MULTIPLY, false, false);
+                    groupLevel++;
+                }
+                break;
+        }
+    }
+
+    private void handleToggleSymbol(MathSymbol symbol){
+        if (!toggle.contains(symbol)){
+            throw new IllegalArgumentException("Argument not part of toggle symbols: " + symbol.toString());
+        }
+        if (head !=null && toggle.contains(symbol) && (previous.type.equals(ExpressionNode.ExpressionType.UNARY_PRE))) {
+            // If the symbol undoes the previous symbol (negate)
+            deleteNode(previous);
+        } else {
+            // Wasn't actually a toggle symbol. So add it as a node
+            addNode(symbol);
+        }
     }
 
     /**
@@ -419,11 +469,17 @@ public class Expression {
         }
         // In - order traversal of expression tree (LR)
         if (node.children[0] != null) {
+            if (node.children[0].nodeGroupLevel > node.nodeGroupLevel){
+                stringBuilder.append(MathSymbol.LEFT_PARENTHESIS.toString());
+            }
             treeToString(node.children[0], stringBuilder);
         }
         stringBuilder.append(node.toString());
         if (node.children[1] != null) {
             treeToString(node.children[1], stringBuilder);
+        }
+        if (node.parent != null && node.parent.nodeGroupLevel < node.nodeGroupLevel){
+            stringBuilder.append(MathSymbol.RIGHT_PARENTHESIS.toString());
         }
         return stringBuilder;
     }
@@ -460,9 +516,13 @@ public class Expression {
                 if (newNode.parent == null){
                     head = newNode;
                 } else {
-                    int i = 0;
-                    while (!newNode.parent.children[i].equals(pushedNode)){
-                        i++;
+                    int i;
+                    for(i = 0; i < newNode.parent.children.length; i++){
+                        if (newNode.parent.children[i] != null){
+                            if (newNode.parent.children[i].equals(pushedNode)){
+                                break;
+                            }
+                        }
                     }
                     newNode.parent.children[i] = newNode;
                 }
@@ -490,7 +550,16 @@ public class Expression {
         if (runner.parent == null){
             return runner;
         }
+        while (node.nodeGroupLevel < start.nodeGroupLevel) {
+            runner = runner.parent;
+            if (runner.parent == null) {
+                return runner;
+            }
+        }
         while (node.precedence.compareTo(runner.parent.precedence) <= 0) {
+            if (runner.nodeGroupLevel > runner.parent.nodeGroupLevel){
+                break;
+            }
             runner = runner.parent;
             if (runner.parent == null) {
                 break;
@@ -526,11 +595,18 @@ public class Expression {
      * Updates a number node by appending a new numeral
      *
      * @param symbol symbol to be appened
-     * @param node   number node to be updated
      */
-    private void appendToNumberNode(MathSymbol symbol, @NonNull NumberNode node) {
-        appendNumeral(symbol);
-        node.number = new BigDecimal(numberBuilder.toString(), mathContext);
+    private void addNumeral(MathSymbol symbol) {
+        if (!isValidNumeral(symbol)) {
+            return;
+        }
+        if (numberBuilder.length() == 0){
+          // Need a new node first
+            addNode(symbol);
+        } else {
+            numberBuilder.append(symbol);
+            previous.number = new BigDecimal(numberBuilder.toString(), mathContext);
+        }
     }
 
     /**
@@ -540,23 +616,21 @@ public class Expression {
      * @return returns true if the numeral was added; otherwise, false
      * @throws IllegalArgumentException
      */
-    private void appendNumeral(MathSymbol symbol) {
+    private boolean isValidNumeral(MathSymbol symbol) {
         if (!numerals.contains(symbol)) {
-            throw new IllegalArgumentException(symbol.toString() + " is not a numeral");
+            return false;
         }
         if (numberBuilder.length() > 0) {
             // If there is already a decimal in the number
             if (symbol.equals(MathSymbol.DECIMAL) && numberBuilder.lastIndexOf(MathSymbol.DECIMAL.toString()) > -1) {
-                throw new IllegalArgumentException(symbol.toString() + " there is already a decimal in the number");
-            }
-            if (symbol.equals(MathSymbol.ZERO)) {
+                return false;
             }
             // If there was already a leading zero in the number
             if (symbol.equals(MathSymbol.ZERO) && numberBuilder.length() == 1 && numberBuilder.lastIndexOf(MathSymbol.ZERO.toString()) > -1) {
-                throw new IllegalArgumentException(symbol.toString() + " there is already a leading zero in the number");
+                return false;
             }
         }
-        numberBuilder.append(symbol);
+        return true;
     }
 
     /**

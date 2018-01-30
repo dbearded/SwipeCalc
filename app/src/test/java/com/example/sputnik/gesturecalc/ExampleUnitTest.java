@@ -374,4 +374,20 @@ public class ExampleUnitTest {
         assertEquals("0.003", expression.toString());
         assertEquals("0.003", expression.getValue());
     }
+
+    @Test
+    public void grouped_expression_isCorrect() throws Exception{
+        assertEquals("4", Expression.evaluateInput("(1)+(3)"));
+        assertEquals("4", Expression.evaluateInput("(1+3)"));
+        assertEquals("8", Expression.evaluateInput("(1+3)*2"));
+        assertEquals("7", Expression.evaluateInput("(1+3*2"));
+        assertEquals("13.14", Expression.evaluateInput("3.14+5*2"));
+        assertEquals("16.28", Expression.evaluateInput("(3.14+5)*2"));
+        assertEquals("(3.14+5)*2", Expression.inputToString("(3.14+5)*2"));
+        assertEquals("(3.14+5)*2", Expression.inputToString("(((3.14+5)*2"));
+        assertEquals("(3.14+5)*2", Expression.inputToString("(((3.14+5)*2))"));
+        assertEquals("((3.14+5)*2)*", Expression.inputToString("(((3.14+5)*2))))))"));
+        assertEquals("16.28", Expression.evaluateInput("(((3.14+5)*2))"));
+        assertEquals("-8", Expression.evaluateInput("-(6+2"));
+    }
 }
