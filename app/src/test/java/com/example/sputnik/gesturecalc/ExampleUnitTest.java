@@ -255,9 +255,9 @@ public class ExampleUnitTest {
 
     @Test
     public void negation_isCorrect() throws Exception{
-        /*assertEquals("-1", Expression.evaluateInput("-1"));
+        assertEquals("-1", Expression.evaluateInput("-1"));
         assertEquals("-5", Expression.evaluateInput("-5.00"));
-        assertEquals("-3.14", Expression.evaluateInput("-3.14"));*/
+        assertEquals("-3.14", Expression.evaluateInput("-3.14"));
         assertEquals("3.14", Expression.evaluateInput("--3.14"));
         assertEquals("-3.14", Expression.evaluateInput("---3.14"));
     }
@@ -389,5 +389,121 @@ public class ExampleUnitTest {
         assertEquals("((3.14+5)*2)*", Expression.inputToString("(((3.14+5)*2))))))"));
         assertEquals("16.28", Expression.evaluateInput("(((3.14+5)*2))"));
         assertEquals("-8", Expression.evaluateInput("-(6+2"));
+        assertEquals("1632", Expression.evaluateInput("-(6+2)*17(-(2+3*(1-2)+13))"));
+    }
+
+    @Test
+    public void grouping_toString_isCorrect(){
+        Expression expression = new Expression("((((6+2");
+        assertEquals("((((6+2", expression.toStringGroupingAsInputted());
+        assertEquals("6+2", expression.toString());
+
+        Expression expression2 = new Expression("((((6+2))");
+        assertEquals("((((6+2))", expression2.toStringGroupingAsInputted());
+        assertEquals("6+2", expression2.toString());
+
+        Expression expression3 = new Expression("6+2)))");
+        assertEquals("6+2*(((", expression3.toStringGroupingAsInputted());
+        assertEquals("6+2*", expression3.toString());
+
+        Expression expression4 = new Expression("6+(((2-14");
+        assertEquals("6+(((2-14", expression4.toStringGroupingAsInputted());
+        assertEquals("6+(2-14)", expression4.toString());
+
+        Expression expression5 = new Expression("(((6+2))*(5%-7");
+        assertEquals("(((6+2))*(5%-7", expression5.toStringGroupingAsInputted());
+        assertEquals("(6+2)*(5%-7)", expression5.toString());
+
+        Expression expression6 = new Expression("(((3*5))+((2*7");
+        assertEquals("(((3*5))+((2*7", expression6.toStringGroupingAsInputted());
+        assertEquals("(3*5)+(2*7)", expression6.toString());
+    }
+
+    @Test
+    public void grouped_delete_isCorrect(){
+        Expression expression = new Expression("-(6+2)*17(-(2+3*(1-2)+13))");
+        /*assertEquals("-(6+2)*17*(-(2+3*(1-2)+13))", expression.toString());
+        assertEquals("1632", expression.getValue());*/
+        expression.delete();
+        /*assertEquals("-(6+2)*17*(-(2+3*(1-2)+13)", expression.toStringGroupingAsInputted());
+        assertEquals("1632", expression.getValue());*/
+        expression.delete();
+        /*assertEquals("-(6+2)*17*(-(2+3*(1-2)+13", expression.toStringGroupingAsInputted());
+        assertEquals("1632", expression.getValue());*/
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+3*(1-2)+1", expression.toStringGroupingAsInputted());
+        assertEquals("0", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+3*(1-2)+", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+3*(1-2)", expression.toStringGroupingAsInputted());
+        assertEquals("-136", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+3*(1-2", expression.toStringGroupingAsInputted());
+        assertEquals("-136", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+3*(1-", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+3*(1", expression.toStringGroupingAsInputted());
+        assertEquals("680", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+3*(", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+3*", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+3", expression.toStringGroupingAsInputted());
+        assertEquals("680", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2+", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(2", expression.toStringGroupingAsInputted());
+        assertEquals("272", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-(", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(-", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*(", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17*", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*17", expression.toStringGroupingAsInputted());
+        assertEquals("-136", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*1", expression.toStringGroupingAsInputted());
+        assertEquals("-8", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)*", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2)", expression.toStringGroupingAsInputted());
+        assertEquals("-8", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+2", expression.toStringGroupingAsInputted());
+        assertEquals("-8", expression.getValue());
+        expression.delete();
+        assertEquals("-(6+", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-(6", expression.toStringGroupingAsInputted());
+        assertEquals("-6", expression.getValue());
+        expression.delete();
+        assertEquals("-(", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("-", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
+        expression.delete();
+        assertEquals("", expression.toStringGroupingAsInputted());
+        assertEquals("", expression.getValue());
     }
 }

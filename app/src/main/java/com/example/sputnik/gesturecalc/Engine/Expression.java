@@ -19,13 +19,21 @@ public class Expression {
     private static EnumSet<MathSymbol> binaryOperators = EnumSet.range(MathSymbol.PLUS, MathSymbol.DIVIDE);
     private static EnumSet<MathSymbol> noChaining = EnumSet.of(MathSymbol.MINUS, MathSymbol.NEGATE);
     private static EnumSet<MathSymbol> toggle = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
-    private static EnumSet<MathSymbol> groupingOperators = EnumSet.of(MathSymbol.LEFT_PARENTHESIS, MathSymbol.RIGHT_PARENTHESIS);
+    private static EnumSet<MathSymbol> groupingOperators = EnumSet.range(MathSymbol.LEFT_PARENTHESIS, MathSymbol.UNSPECIFIED_PARENTHESIS);
     private ExpressionNode head;
     private ExpressionNode previous;
     private StringBuilder numberBuilder = new StringBuilder();
     private MathContext mathContext = new MathContext(14, RoundingMode.HALF_EVEN);
     private DecimalFormat decimalFormat = new DecimalFormat("0.##############");
     private int groupLevel = 0;
+
+    public Expression(String str){
+        add(stringInputToMathSymbols(str));
+    }
+
+    public Expression(MathSymbol... symbols){
+        add(symbols);
+    }
 
     private static abstract class ExpressionNode {
         enum ExpressionType {
@@ -213,6 +221,7 @@ public class Expression {
 //            add(symbol, false, false); // When testing is finished, use this instead
         }
 //        forceEvaluate();
+        // TODO notify observers
     }
 
     public void add(MathSymbol symbol){
@@ -224,7 +233,8 @@ public class Expression {
     }
 
     private void add(MathSymbol symbol, boolean notifyObservers, boolean evaluate) {
-        try {
+//        System.out.println("attempting to add symbol: " + symbol.toString());
+//        try {
             // Handle special cases first before adding another node
             if (numerals.contains(symbol)) {
                 addNumeral(symbol);
@@ -233,39 +243,52 @@ public class Expression {
             } else if (toggle.contains(symbol)){
                 handleToggleSymbol(symbol);
             } else {
+                // No special case so just add another node
                 addNode(symbol);
             }
-        } catch (RuntimeException e) {
+        /*} catch (RuntimeException e) {
             System.out.println("attempting to add symbol: " + symbol.toString());
             System.out.println("grouping level: " + groupLevel);
             System.out.println("head: " + head.toString());
             System.out.println("previous: " + previous.toString());
             System.out.println("expression: " + this.toString());
             e.printStackTrace();
-        }
+        }*/
         if (evaluate){
             evaluateToRoot(previous);
         }
         if (notifyObservers){
             // TODO notifyObservers
         }
+        /*System.out.println("grouping level: " + groupLevel);
+        if (head != null) {
+            System.out.println("head: " + head.toString());
+        }
+        if (previous != null) {
+            System.out.println("previous: " + previous.toString());
+        }
+        System.out.println("expression: " + this.toString());*/
     }
 
     public void delete() {
-        // Remove a numeral OR the entire node
-        if (previous.type.equals(ExpressionNode.ExpressionType.NUMBER) && numberBuilder.length() > 1){
-            numberBuilder.deleteCharAt(numberBuilder.length()-1);
-            if (numberBuilder.charAt(numberBuilder.length()-1) == '.'){
-                numberBuilder.deleteCharAt(numberBuilder.length()-1);
+        if (previous == null){
+            return;
+        }
+        if (groupLevel == previous.nodeGroupLevel){
+            switch (previous.type){
+                case NUMBER:
+                    deleteNumeral();
+                    break;
+                case UNARY_POST:
+                case UNARY_PRE:
+                case BINARY:
+                    deleteNode(previous);
+                    break;
             }
-            previous.number = new BigDecimal(numberBuilder.toString(), mathContext);
-            evaluateToRoot(previous);
+        } else if (groupLevel < previous.nodeGroupLevel) {
+            groupLevel++;
         } else {
-            deleteNode(previous);
-            // Reset numberBuilder
-            if (previous != null && previous.type.equals(ExpressionNode.ExpressionType.NUMBER)){
-                numberBuilder.append(previous.number.toPlainString());
-            }
+            groupLevel--;
         }
     }
 
@@ -304,6 +327,29 @@ public class Expression {
             return "";
         }
         return treeToString(head, new StringBuilder()).toString();
+    }
+
+    public String toStringGroupingAsInputted() {
+        if (head == null){
+            return "";
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < head.nodeGroupLevel; i++ ) {
+            stringBuilder.append(MathSymbol.LEFT_PARENTHESIS.toString());
+        }
+        foundPrevious = false;
+        treeToStringGroupingAsInputted(head, stringBuilder);
+        if (previous.nodeGroupLevel > groupLevel) {
+            for (int i = previous.nodeGroupLevel; i > groupLevel; i--) {
+                stringBuilder.append(MathSymbol.RIGHT_PARENTHESIS.toString());
+            }
+        } else if (previous.nodeGroupLevel < groupLevel){
+            for (int i = previous.nodeGroupLevel; i < groupLevel; i++) {
+                stringBuilder.append(MathSymbol.LEFT_PARENTHESIS.toString());
+            }
+        }
+        String result = stringBuilder.toString();
+        return result;
     }
 
     // TODO make a comment that maps previous to potential
@@ -398,6 +444,7 @@ public class Expression {
                 groupLevel++;
                 break;
             case NUMBER:
+                numberBuilder.setLength(0);
             case UNARY_POST:
                 if (groupLevel > 0){
                     groupLevel--;
@@ -456,6 +503,29 @@ public class Expression {
         }
     }
 
+    private void deleteNumeral(){
+        // If numberBuilder wasn't reset, need to reset it
+        if (numberBuilder.length() == 0){
+            numberBuilder.append(previous.number.toPlainString());
+        }
+
+        // Remove a numeral OR the entire node
+        if (previous.type.equals(ExpressionNode.ExpressionType.NUMBER) && numberBuilder.length() > 1){
+            numberBuilder.deleteCharAt(numberBuilder.length()-1);
+            if (numberBuilder.charAt(numberBuilder.length()-1) == '.'){
+                numberBuilder.deleteCharAt(numberBuilder.length()-1);
+            }
+            previous.number = new BigDecimal(numberBuilder.toString(), mathContext);
+            evaluateToRoot(previous);
+        } else {
+            deleteNode(previous);
+            // Reset numberBuilder
+            if (previous != null && previous.type.equals(ExpressionNode.ExpressionType.NUMBER)){
+                numberBuilder.append(previous.number.toPlainString());
+            }
+        }
+    }
+
     /**
      * Rebuilds the Expression by traversing the Expression tree
      *
@@ -476,10 +546,48 @@ public class Expression {
         }
         stringBuilder.append(node.toString());
         if (node.children[1] != null) {
+            if (node.children[1].nodeGroupLevel > node.nodeGroupLevel){
+                stringBuilder.append(MathSymbol.LEFT_PARENTHESIS.toString());
+            }
             treeToString(node.children[1], stringBuilder);
         }
         if (node.parent != null && node.parent.nodeGroupLevel < node.nodeGroupLevel){
             stringBuilder.append(MathSymbol.RIGHT_PARENTHESIS.toString());
+        }
+        return stringBuilder;
+    }
+
+    // Used for early breaking out of previous
+    private boolean foundPrevious = false;
+    // TODO refactor with stack for better performance and so don't have to use non-local var
+    private StringBuilder treeToStringGroupingAsInputted(ExpressionNode node, StringBuilder stringBuilder) {
+        if (node == null) {
+            return null;
+        }
+        // In - order traversal of expression tree (LR)
+        if (node.children[0] != null) {
+            for (int i = node.nodeGroupLevel; i < node.children[0].nodeGroupLevel; i++) {
+                stringBuilder.append(MathSymbol.LEFT_PARENTHESIS.toString());
+            }
+            treeToStringGroupingAsInputted(node.children[0], stringBuilder);
+        }
+        stringBuilder.append(node.toString());
+        if (node.children[1] != null) {
+            for (int i = node.nodeGroupLevel; i < node.children[1].nodeGroupLevel; i++) {
+                stringBuilder.append(MathSymbol.LEFT_PARENTHESIS.toString());
+            }
+            treeToStringGroupingAsInputted(node.children[1], stringBuilder);
+        }
+        if (node.equals(previous)){
+            foundPrevious = true;
+        }
+        if (foundPrevious){
+            return stringBuilder;
+        }
+        if (node.parent != null){
+            for (int i = node.nodeGroupLevel; i > node.parent.nodeGroupLevel; i--) {
+                stringBuilder.append(MathSymbol.RIGHT_PARENTHESIS.toString());
+            }
         }
         return stringBuilder;
     }
@@ -550,7 +658,7 @@ public class Expression {
         if (runner.parent == null){
             return runner;
         }
-        while (node.nodeGroupLevel < start.nodeGroupLevel) {
+        while (node.nodeGroupLevel < runner.nodeGroupLevel) {
             runner = runner.parent;
             if (runner.parent == null) {
                 return runner;
@@ -636,7 +744,6 @@ public class Expression {
     /**
      * Deletes a given node, preserving the tree by stitching the child of the given node with its parent (left child only for a binary operator)
      *
-     * @param node node to be deleted
      */
     private void deleteNode(@NonNull ExpressionNode node) {
 
