@@ -1,4 +1,4 @@
-package com.example.sputnik.gesturecalc.Engine;
+package com.example.sputnik.gesturecalc.data;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -7,17 +7,17 @@ import java.math.MathContext;
  * Created by Sputnik on 1/24/2018.
  */
 
-class AdditionOperator extends BinaryOperator {
+class SubtractionOperator extends BinaryOperator {
 
-    AdditionOperator(){
-        symbol = MathSymbol.PLUS;
+    SubtractionOperator(){
+        symbol = MathSymbol.MINUS;
         precedence = ExpressionPrecedence.LOWEST;
         mathContext = new MathContext(0);
     }
 
     @Override
-    BigDecimal operate(BigDecimal leftOperand, BigDecimal rightOperand) {
-        return leftOperand.add(rightOperand, mathContext);
+    public BigDecimal operate(BigDecimal leftOperand, BigDecimal rightOperand) {
+        return leftOperand.subtract(rightOperand, mathContext);
     }
 
     @Override

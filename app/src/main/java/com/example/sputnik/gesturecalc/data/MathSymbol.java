@@ -1,4 +1,4 @@
-package com.example.sputnik.gesturecalc.Engine;
+package com.example.sputnik.gesturecalc.data;
 
 /**
  * Created by Sputnik on 1/23/2018.

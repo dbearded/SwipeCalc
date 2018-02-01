@@ -1,4 +1,4 @@
-package com.example.sputnik.gesturecalc.Engine;
+package com.example.sputnik.gesturecalc.data;
 
 import android.support.annotation.NonNull;
 
@@ -26,25 +26,19 @@ public class Expression {
     private MathContext mathContext = new MathContext(14, RoundingMode.HALF_EVEN);
     private DecimalFormat decimalFormat = new DecimalFormat("0.##############");
     private int groupLevel = 0;
-
-    public Expression(String str){
-        add(stringInputToMathSymbols(str));
-    }
-
-    public Expression(MathSymbol... symbols){
-        add(symbols);
-    }
+    // Used for early breaking out of previous
+    private boolean foundPrevious = false;
 
     private static abstract class ExpressionNode {
-        enum ExpressionType {
-            UNARY_PRE, UNARY_POST, BINARY, NUMBER
-        }
         protected ExpressionNode[] children;
         protected ExpressionNode parent;
         protected BigDecimal number;
         protected ExpressionPrecedence precedence;
         protected ExpressionType type;
         protected int nodeGroupLevel = 0;
+        enum ExpressionType {
+            UNARY_PRE, UNARY_POST, BINARY, NUMBER
+        }
 
         ExpressionNode(ExpressionType type){
             this.type = type;
@@ -57,16 +51,16 @@ public class Expression {
 
         private BinaryOperator operator;
 
+        BinaryOperatorNode(BinaryOperator binaryOperator, MathContext mathContext){
+            this(binaryOperator);
+            this.operator.setMathContext(mathContext);
+        }
+
         BinaryOperatorNode(BinaryOperator binaryOperator) {
             super(ExpressionType.BINARY);
             this.operator = binaryOperator;
             children = new ExpressionNode[2];
             precedence = operator.precedence;
-        }
-
-        BinaryOperatorNode(BinaryOperator binaryOperator, MathContext mathContext){
-            this(binaryOperator);
-            this.operator.setMathContext(mathContext);
         }
 
         @Override
@@ -92,6 +86,11 @@ public class Expression {
 
         private UnaryOperator operator;
 
+        UnaryOperatorNode(UnaryOperator operator, MathContext mathContext){
+            this(operator);
+            this.operator.setMathContext(mathContext);
+        }
+
         UnaryOperatorNode(UnaryOperator operator) {
             // Default to PRE and change if needed after construction
             super(ExpressionType.UNARY_PRE);
@@ -104,11 +103,6 @@ public class Expression {
             if (operator.unaryType.equals(UnaryOperator.UnaryType.POST)){
                 this.type = ExpressionType.UNARY_POST;
             }
-        }
-
-        UnaryOperatorNode(UnaryOperator operator, MathContext mathContext){
-            this(operator);
-            this.operator.setMathContext(mathContext);
         }
 
         MathSymbol getSymbol() {
@@ -144,16 +138,16 @@ public class Expression {
     private static class NumberNode extends ExpressionNode {
         private DecimalFormat decimalFormat;
 
+        NumberNode(BigDecimal number, DecimalFormat format){
+            this(number);
+            this.decimalFormat = format;
+        }
+
         NumberNode(BigDecimal number) {
             super(ExpressionType.NUMBER);
             this.number = number;
             precedence = ExpressionPrecedence.NUMBER;
             children = new ExpressionNode[2];
-        }
-
-        NumberNode(BigDecimal number, DecimalFormat format){
-            this(number);
-            this.decimalFormat = format;
         }
 
         @Override
@@ -164,6 +158,14 @@ public class Expression {
         public String toString() {
             return decimalFormat.format(number);
         }
+    }
+
+    public Expression(String str){
+        add(stringInputToMathSymbols(str));
+    }
+
+    public Expression(MathSymbol... symbols){
+        add(symbols);
     }
 
     /**
@@ -232,44 +234,6 @@ public class Expression {
         add(symbol, notifyObservers, true);
     }
 
-    private void add(MathSymbol symbol, boolean notifyObservers, boolean evaluate) {
-//        System.out.println("attempting to add symbol: " + symbol.toString());
-//        try {
-            // Handle special cases first before adding another node
-            if (numerals.contains(symbol)) {
-                addNumeral(symbol);
-            } else if (groupingOperators.contains(symbol)){
-                handleGroupingSymbol(symbol);
-            } else if (toggle.contains(symbol)){
-                handleToggleSymbol(symbol);
-            } else {
-                // No special case so just add another node
-                addNode(symbol);
-            }
-        /*} catch (RuntimeException e) {
-            System.out.println("attempting to add symbol: " + symbol.toString());
-            System.out.println("grouping level: " + groupLevel);
-            System.out.println("head: " + head.toString());
-            System.out.println("previous: " + previous.toString());
-            System.out.println("expression: " + this.toString());
-            e.printStackTrace();
-        }*/
-        if (evaluate){
-            evaluateToRoot(previous);
-        }
-        if (notifyObservers){
-            // TODO notifyObservers
-        }
-        /*System.out.println("grouping level: " + groupLevel);
-        if (head != null) {
-            System.out.println("head: " + head.toString());
-        }
-        if (previous != null) {
-            System.out.println("previous: " + previous.toString());
-        }
-        System.out.println("expression: " + this.toString());*/
-    }
-
     public void delete() {
         if (previous == null){
             return;
@@ -316,19 +280,6 @@ public class Expression {
         return decimalFormat.format(head.number);
     }
 
-    /**
-     * Generates a string representation of the Expression
-     *
-     * @return a string representation of the Expression
-     */
-    @Override
-    public String toString() {
-        if (head == null){
-            return "";
-        }
-        return treeToString(head, new StringBuilder()).toString();
-    }
-
     public String toStringGroupingAsInputted() {
         if (head == null){
             return "";
@@ -350,6 +301,17 @@ public class Expression {
         }
         String result = stringBuilder.toString();
         return result;
+    }    /**
+     * Generates a string representation of the Expression
+     *
+     * @return a string representation of the Expression
+     */
+    @Override
+    public String toString() {
+        if (head == null){
+            return "";
+        }
+        return treeToString(head, new StringBuilder()).toString();
     }
 
     // TODO make a comment that maps previous to potential
@@ -428,6 +390,44 @@ public class Expression {
             expressionNode.nodeGroupLevel = groupLevel;
         }
         return expressionNode;
+    }
+
+    private void add(MathSymbol symbol, boolean notifyObservers, boolean evaluate) {
+//        System.out.println("attempting to add symbol: " + symbol.toString());
+//        try {
+            // Handle special cases first before adding another node
+            if (numerals.contains(symbol)) {
+                addNumeral(symbol);
+            } else if (groupingOperators.contains(symbol)){
+                handleGroupingSymbol(symbol);
+            } else if (toggle.contains(symbol)){
+                handleToggleSymbol(symbol);
+            } else {
+                // No special case so just add another node
+                addNode(symbol);
+            }
+        /*} catch (RuntimeException e) {
+            System.out.println("attempting to add symbol: " + symbol.toString());
+            System.out.println("grouping level: " + groupLevel);
+            System.out.println("head: " + head.toString());
+            System.out.println("previous: " + previous.toString());
+            System.out.println("expression: " + this.toString());
+            e.printStackTrace();
+        }*/
+        if (evaluate){
+            evaluateToRoot(previous);
+        }
+        if (notifyObservers){
+            // TODO notifyObservers
+        }
+        /*System.out.println("grouping level: " + groupLevel);
+        if (head != null) {
+            System.out.println("head: " + head.toString());
+        }
+        if (previous != null) {
+            System.out.println("previous: " + previous.toString());
+        }
+        System.out.println("expression: " + this.toString());*/
     }
 
     private void handleGroupingSymbol(MathSymbol symbol){
@@ -557,8 +557,6 @@ public class Expression {
         return stringBuilder;
     }
 
-    // Used for early breaking out of previous
-    private boolean foundPrevious = false;
     // TODO refactor with stack for better performance and so don't have to use non-local var
     private StringBuilder treeToStringGroupingAsInputted(ExpressionNode node, StringBuilder stringBuilder) {
         if (node == null) {

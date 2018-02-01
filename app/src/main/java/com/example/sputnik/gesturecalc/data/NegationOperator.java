@@ -1,4 +1,4 @@
-package com.example.sputnik.gesturecalc.Engine;
+package com.example.sputnik.gesturecalc.data;
 
 import java.math.BigDecimal;
 import java.math.MathContext;

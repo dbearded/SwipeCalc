@@ -2,7 +2,6 @@ package com.example.sputnik.gesturecalc;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.ViewGroup;
 
 public class MainActivity extends AppCompatActivity {
 

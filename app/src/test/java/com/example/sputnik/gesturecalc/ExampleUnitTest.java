@@ -1,7 +1,7 @@
 package com.example.sputnik.gesturecalc;
 
-import com.example.sputnik.gesturecalc.Engine.Expression;
-import com.example.sputnik.gesturecalc.Engine.MathSymbol;
+import com.example.sputnik.gesturecalc.data.Expression;
+import com.example.sputnik.gesturecalc.data.MathSymbol;
 
 import org.junit.ComparisonFailure;
 import org.junit.Test;
@@ -15,7 +15,7 @@ import java.util.Random;
 import static org.junit.Assert.*;
 
 /**
- * Example local unit test, which will execute on the development machine (host).
+ * Example local unit TestInterface, which will execute on the development machine (host).
  *
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
@@ -156,7 +156,7 @@ public class ExampleUnitTest {
             expressionOutput = Expression.evaluateInput(builder.toString());
             assertEquals(decimalFormat.format(result), expressionOutput);
         } catch (AssertionError cf){
-            throw new ComparisonFailure(cf.getMessage() + "test did not work with given input: " + builder.toString(), result.toString(), expressionOutput);
+            throw new ComparisonFailure(cf.getMessage() + "TestInterface did not work with given input: " + builder.toString(), result.toString(), expressionOutput);
         }
     }
 
@@ -186,7 +186,7 @@ public class ExampleUnitTest {
             expressionOutput = Expression.evaluateInput(builder.toString());
             assertEquals(decimalFormat.format(result), expressionOutput);
         } catch (AssertionError cf){
-            throw new ComparisonFailure(cf.getMessage() + "test did not work with given input: " + builder.toString(), result.toString(), expressionOutput);
+            throw new ComparisonFailure(cf.getMessage() + "TestInterface did not work with given input: " + builder.toString(), result.toString(), expressionOutput);
         }
     }
 
@@ -216,9 +216,9 @@ public class ExampleUnitTest {
             expressionOutput = Expression.evaluateInput(builder.toString());
             assertEquals(decimalFormat.format(result), expressionOutput);
         } catch (AssertionError cf){
-            throw new ComparisonFailure(cf.getMessage() + " test did not work with given input: " + builder.toString(), result.toString(), expressionOutput);
+            throw new ComparisonFailure(cf.getMessage() + " TestInterface did not work with given input: " + builder.toString(), result.toString(), expressionOutput);
         } catch (Exception e){
-            throw new Exception("Test did not work. Expected output: " + result.toString() + " input: " + builder.toString(), e);
+            throw new Exception("TestInterface did not work. Expected output: " + result.toString() + " input: " + builder.toString(), e);
         }
     }
 
