@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<view class = "com.example.sputnik.gesturecalc.MainActivity$MyLayout" xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.sputnik.gesturecalc.MainActivity">
+    tools:context="com.example.sputnik.gesturecalc.MainActivity"
+    android:id="@+id/Clayout">
 
     <android.support.v7.widget.GridLayout
         android:id="@+id/gridLayout"
@@ -28,6 +29,7 @@
             android:id="@+id/clear"
             style="@style/CalcButton.Operator.ReducedSize"
             android:textColor="#F4511E"
+            android:clickable="true"
             android:textStyle="bold"
             android:text="@string/clear"
             app:layout_column="0"
@@ -304,6 +306,4 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.75" />
-
-</android.support.constraint.ConstraintLayout>
-
+</view>
