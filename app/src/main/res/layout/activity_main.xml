@@ -1,31 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<view class = "com.example.sputnik.gesturecalc.MainActivity$MyLayout" xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.sputnik.gesturecalc.MainActivity"
-    android:id="@+id/Clayout">
+    tools:context="com.example.sputnik.gesturecalc.MainActivity">
 
-    <android.support.v7.widget.GridLayout
+    <view class="com.example.sputnik.gesturecalc.MainActivity$MyLayout"
         android:id="@+id/gridLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/colorPrimary"
-        app:alignmentMode="alignBounds"
-        app:columnCount="4"
-        app:columnOrderPreserved="true"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:alignmentMode="alignBounds"
+        android:columnCount="4"
+        android:columnOrderPreserved="true"
         app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:orientation="horizontal"
-        app:rowCount="5"
-        app:rowOrderPreserved="true"
-        app:useDefaultMargins="false">
+        android:orientation="horizontal"
+        android:rowCount="5"
+        android:rowOrderPreserved="true"
+        android:useDefaultMargins="false">
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/clear"
             style="@style/CalcButton.Operator.ReducedSize"
             android:textColor="#F4511E"
@@ -39,7 +38,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/parentheses"
             style="@style/CalcButton.Operator.ReducedSize"
             android:text="@string/parentheses"
@@ -51,7 +50,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/percent"
             style="@style/CalcButton.Operator.ReducedSize"
             android:text="@string/percent"
@@ -62,7 +61,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/divide"
             style="@style/CalcButton.Operator"
             android:text="@string/divide"
@@ -73,7 +72,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_7"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_7"
@@ -84,7 +83,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_8"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_8"
@@ -95,7 +94,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_9"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_9"
@@ -106,7 +105,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/times"
             style="@style/CalcButton.Operator"
             android:text="@string/times"
@@ -117,7 +116,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_4"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_4"
@@ -128,7 +127,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_5"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_5"
@@ -139,7 +138,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_6"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_6"
@@ -150,7 +149,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/minus"
             style="@style/CalcButton.Operator"
             android:text="@string/minus"
@@ -161,7 +160,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_1"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_1"
@@ -172,7 +171,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_2"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_2"
@@ -183,7 +182,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_3"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_3"
@@ -194,7 +193,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/plus"
             style="@style/CalcButton.Operator"
             android:text="@string/plus"
@@ -205,7 +204,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/negate"
             style="@style/CalcButton.Operator"
             android:text="@string/negate"
@@ -216,7 +215,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_0"
             style="@style/CalcButton.Numeral"
             android:text="@string/number_0"
@@ -227,7 +226,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/number_."
             style="@style/CalcButton.Numeral"
             android:text="@string/decimal"
@@ -238,7 +237,7 @@
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
 
-        <TextView
+        <view class="com.example.sputnik.gesturecalc.MainActivity$ButtonTextView"
             android:id="@+id/equals"
             style="@style/CalcButton.Operator"
             android:background="@android:color/transparent"
@@ -250,7 +249,7 @@
             app:layout_row="4"
             app:layout_rowSpan="1"
             app:layout_rowWeight="1" />
-    </android.support.v7.widget.GridLayout>
+    </view>
 
     <ImageView
         android:id="@+id/delete"
@@ -306,4 +305,4 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.75" />
-</view>
+</android.support.constraint.ConstraintLayout>
