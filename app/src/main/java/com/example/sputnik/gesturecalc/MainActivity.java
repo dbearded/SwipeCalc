@@ -9,7 +9,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.AttributeSet;
@@ -18,12 +17,10 @@ import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -175,14 +172,21 @@ public class MainActivity extends AppCompatActivity {
 //        SketchView sketchView;
         private int xStart, yStart, xEnd, yEnd;
         private Path entirePath = new Path();
+        private ButtonTextView button;
 
 
         private int[] resetPos = new int[2];
         private List<Path> paths = new LinkedList<>();
+        private LinkedList<Integer> procs = new LinkedList<>();
         private Paint paint;
+        private Paint clickedPaint;
         private Path path;
         private Bitmap bitmap;
         private Canvas canvas;
+
+        private float cumulativeDirX, cumulativeDirY, prevX, prevY, dx, dy, rPrevX, rPrevY;
+        private float[] prevLine = new float[2];
+        private float[] currentLine = new float[2];
 
         public MyLayout(Context context) {
             super(context);
@@ -207,14 +211,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
         void setupPaint(){
-            paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+//            paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            paint = new Paint();
             paint.setDither(true);
             paint.setColor(getResources().getColor(R.color.swipe));
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeJoin(Paint.Join.ROUND);
             paint.setStrokeCap(Paint.Cap.ROUND);
             paint.setStrokeWidth(16);
+            setupClickedPaint();
 //            this.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        void setupClickedPaint(){
+            clickedPaint = new Paint();
+            clickedPaint.setDither(true);
+            clickedPaint.setColor(Color.RED);
+            clickedPaint.setStyle(Paint.Style.STROKE);
+            clickedPaint.setStrokeJoin(Paint.Join.ROUND);
+            clickedPaint.setStrokeCap(Paint.Cap.ROUND);
+            clickedPaint.setStrokeWidth(18);
         }
 
         void setupPath(){
@@ -237,6 +253,7 @@ public class MainActivity extends AppCompatActivity {
             entirePath.reset();
             path.reset();
             paths.clear();
+            procs.clear();
             this.invalidate();
         }
 
@@ -258,6 +275,14 @@ public class MainActivity extends AppCompatActivity {
                     paths) {
                 canvas.drawPath(path, paint);
             }*/
+
+            for (int i = 0; i < paths.size(); i++){
+                if (!procs.isEmpty() && (Integer) i == procs.peekFirst()){
+                    canvas.drawPath(paths.get(i), clickedPaint);
+                } else {
+                    canvas.drawPath(paths.get(i), paint);
+                }
+            }
 //            while(!paths.isEmpty()){
 //                entirePath.addPath(((LinkedList<Path>) paths).remove());
 //            }
@@ -268,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
                 entirePath.addPath(path);
             }
             canvas.drawPath(entirePath, paint);*/
-            canvas.drawPath(path, paint);
+//            canvas.drawPath(path, paint);
         }
 
         /*@Override
@@ -328,22 +353,61 @@ public class MainActivity extends AppCompatActivity {
                 case MotionEvent.ACTION_DOWN:
                     /*DrawingClass pathWithPaint = new DrawingClass();
                     pathWithPaint.setupPaint(paint);*/
-//                    path = new Path();
+                    path = new Path();
                     path.moveTo(ev.getX(), ev.getY());
                     path.lineTo(ev.getX(), ev.getY());
+                    paths.add(path);
+                    prevX = ev.getX();
+                    prevY = ev.getY();
+                    prevLine[0] = 0;
+                    prevLine[1] = 0;
+                    currentLine[0] = 0;
+                    currentLine[1] = 0;
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    for (int i = 0; i < ev.getHistorySize(); i++){
-//                        path = new Path();
-//                        path.moveTo(ev.getHistoricalX(i), ev.getHistoricalY(i));
+                    /*for (int i = 0; i < ev.getHistorySize(); i++){
+                        path = new Path();
+                        path.moveTo(ev.getHistoricalX(i), ev.getHistoricalY(i));
                         path.lineTo(ev.getHistoricalX(i), ev.getHistoricalY(i));
-//                        paths.add(path);
-                    }
+                        paths.add(path);
+                        dx = ev.getHistoricalX(i) - prevX;
+                        dy = ev.getHistoricalY(i) - prevY;
+                        if (prevLine[0] == 0 && prevLine[1] == 0){
+                            prevLine[0] = dx;
+                            prevLine[1] = dy;
+                            continue;
+                        }
+                        currentLine[0] = dx;
+                        currentLine[1] = dy;
+                        float similarity = computeSimilarity(prevLine, currentLine);
+                        if (similarity >= 1.0472){
+                            procs.add(paths.size());
+                        }
+                        prevLine[0] = currentLine[0];
+                        prevLine[1] = currentLine[1];
+                    }*/
                     /*path.addRect((float) ev.getX(),(float) ev.getY(),(float) ev.getX()+xEnd,(float) ev.getY()+(yEnd-yStart), Path.Direction.CCW);*/
-//                    path.moveTo(ev.getX(), ev.getY());
+                    path = new Path();
+                    path.moveTo(ev.getX(), ev.getY());
                     path.lineTo(ev.getX(), ev.getY());
+                    paths.add(path);
+                    dx = ev.getX() - prevX;
+                    dy = ev.getY() - prevY;
+                    if (prevLine[0] == 0 && prevLine[1] == 0){
+                        prevLine[0] = dx;
+                        prevLine[1] = dy;
+                        break;
+                    }
+                    currentLine[0] = dx;
+                    currentLine[1] = dy;
+                    if (computeSimilarity(prevLine, currentLine) >= 1.0472){
+                        path.lineTo(prevLine[0], prevLine[1]);
+                        procs.add(paths.size());
+                    }
                     /*pathWithPaint.setPath(path2);
                     pathWithPaint.setupPaint(paint);*/
+                    prevLine[0] = currentLine[0];
+                    prevLine[1] = currentLine[1];
                     break;
                 case MotionEvent.ACTION_UP:
                     /*if (pathWithPaint != null){
@@ -356,6 +420,14 @@ public class MainActivity extends AppCompatActivity {
 
             this.invalidate();
             return true;
+        }
+
+        float computeSimilarity(float[] prev, float[] current){
+            float dot = prev[0]*current[0] + prev[1]*current[1];
+            float magPrev = (float) Math.sqrt(prev[0]*prev[0]+prev[1]*prev[1]);
+            float magCur = (float) Math.sqrt(current[0]*current[0]+current[1]*current[1]);
+            float cosTheta = dot/(magCur*magPrev);
+            return (float) Math.acos(cosTheta);
         }
 
 /*        @Override
