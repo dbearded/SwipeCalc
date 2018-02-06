@@ -11,12 +11,12 @@
     <string name="number_9">9</string>
     <string name="number_0">0</string>
     <string name="decimal">.</string>
-    <string name="negate">±</string>
+    <string name="negate">\u00b1</string> <!-- ± -->
     <string name="equals">=</string>
-    <string name="plus">+</string>
+    <string name="plus">+</string> <!-- + -->
     <string name="minus">\u2212</string>
-    <string name="times">×</string> <!-- alt+0215 (num pad) -->
-    <string name="divide">÷</string> <!-- alt+0247 (num pad) -->
+    <string name="times">\u00d7</string> <!-- alt+0215 (num pad) -->
+    <string name="divide">\u00f7</string> <!-- alt+0247 (num pad) -->
     <string name="percent">%</string>
     <string name="parentheses">()</string>
     <string name="clear">C</string>

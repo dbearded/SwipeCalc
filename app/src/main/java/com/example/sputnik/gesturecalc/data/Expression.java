@@ -7,12 +7,13 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.EnumSet;
+import java.util.Observable;
 
 /**
  * Created by Sputnik on 1/23/2018.
  */
 
-public class Expression {
+public class Expression extends Observable {
     public static EnumSet<MathSymbol> numerals = EnumSet.range(MathSymbol.ZERO, MathSymbol.DECIMAL);
     private static EnumSet<MathSymbol> preUnaryOperators = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
     private static EnumSet<MathSymbol> postUnaryOperators = EnumSet.of(MathSymbol.PERCENT, MathSymbol.NEGATE);
@@ -160,6 +161,8 @@ public class Expression {
         }
     }
 
+    public Expression(){}
+
     public Expression(String str){
         add(stringInputToMathSymbols(str));
     }
@@ -219,11 +222,11 @@ public class Expression {
     public void add(MathSymbol... symbols){
         for (MathSymbol symbol :
                 symbols) {
-            add(symbol, false, true); // For testing
-//            add(symbol, false, false); // When testing is finished, use this instead
+//            add(symbol, false, true); // For testing
+            add(symbol, false, false); // When testing is finished, use this instead
         }
-//        forceEvaluate();
-        // TODO notify observers
+        forceEvaluate();
+        notifyObservers();
     }
 
     public void add(MathSymbol symbol){
@@ -232,6 +235,15 @@ public class Expression {
 
     public void add(MathSymbol symbol, boolean notifyObservers){
         add(symbol, notifyObservers, true);
+    }
+
+    public void clear() {
+        head = null;
+        previous = null;
+        numberBuilder.setLength(0);
+        groupLevel = 0;
+        setChanged();
+        notifyObservers();
     }
 
     public void delete() {
@@ -418,7 +430,8 @@ public class Expression {
             evaluateToRoot(previous);
         }
         if (notifyObservers){
-            // TODO notifyObservers
+            setChanged();
+            notifyObservers();
         }
         /*System.out.println("grouping level: " + groupLevel);
         if (head != null) {
@@ -476,6 +489,9 @@ public class Expression {
      */
     private void addNode(MathSymbol symbol) {
         ExpressionNode node = createNode(previous, symbol);
+        if (node == null){
+            return;
+        }
         // First node in expression tree
         if (previous == null) {
             head = node;
