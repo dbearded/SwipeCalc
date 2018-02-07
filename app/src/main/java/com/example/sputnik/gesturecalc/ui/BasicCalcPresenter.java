@@ -41,15 +41,7 @@ public class BasicCalcPresenter implements Observer {
                 updatePreview("");
                 break;
             case "\u00b1":
-            case "\u2212":
-                expression.add(MathSymbol.fromString("-"));
-                break;
-            case "\u00d7":
-                expression.add(MathSymbol.fromString("*"));
-                break;
-            case "\u00f7":
-                expression.add(MathSymbol.fromString("/"));
-                break;
+                expression.add(MathSymbol.fromString("\u00af"));
             case "()":
                 expression.add(MathSymbol.fromString("("));
                 break;

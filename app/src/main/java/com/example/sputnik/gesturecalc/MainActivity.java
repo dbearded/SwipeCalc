@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import static android.os.Build.VERSION.SDK;
+import static android.os.Build.VERSION.SDK_INT;
+
 public class MainActivity extends AppCompatActivity {
 
     MyLayout layout;
@@ -127,8 +130,7 @@ public class MainActivity extends AppCompatActivity {
         // Strike angle is 65/180*3.14 = 1.13f
         // Strike angle is 61/180*3.14 = 1.064f
         // Strike angle is 55/180*3.14 = 0.960
-        // Strike angle is
-        private final float STRIKE_ANGLE = 0.96f;
+        private final float STRIKE_ANGLE = 1.24f;
         // Loop angle is 260/180*3.14
         private final float LOOP_ANGLE = 4.54f;
         private List<ButtonListener> buttonListeners = new ArrayList<ButtonListener>();
