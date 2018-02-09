@@ -1,7 +1,6 @@
 package com.example.sputnik.gesturecalc;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -15,7 +14,6 @@ import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -37,10 +35,11 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     private ButtonTextView clearButton;
     private Path entirePath = new Path();
     private Path path;
-    private List<Path> paths = new LinkedList<>();
-    private List<Integer> procs = new ArrayList<>();
+//    private List<Path> paths = new LinkedList<>();
+//    private List<Integer> procs = new ArrayList<>();
     private Paint paint;
     private Paint clickedPaint;
+    private PathAnimator animator;
     private float[] downPoint = new float[2];
     private float[] prevPoint = new float[2];
     private float[] prevVector = new float[2];
@@ -78,6 +77,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         setupPaint();
         setupPath();
         this.setWillNotDraw(false);
+        animator = new PathAnimator();
     }
 
     void setupPaint(){
@@ -140,6 +140,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         return ((int) (y) / ((int) PX_PER_ROW));
     }
 
+    /* // old method for use with pre-first animation
     void clearPath(){
         entirePath.reset();
         path.reset();
@@ -150,8 +151,16 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         paths.clear();
         procs.clear();
         this.invalidate();
+    }*/
+
+    void clearPath(){
+        entirePath.reset();
+        path.reset();
+        animator.reset();
+        this.invalidate();
     }
 
+    /* old method for use with pre-first animation
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
@@ -165,6 +174,15 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             } else {
                 canvas.drawPath(paths.get(i), paint);
             }
+        }
+    }*/
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        animator.updateCanvas(canvas);
+        if (animator.isRunning()){
+            invalidate();
         }
     }
 
@@ -227,6 +245,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         buttonListeners.remove(listener);
     }
 
+    /* // Old code for first path animation
     private void processMoveAction(float x, float y){
         float dx = x - prevPoint[0];
         float dy = y - prevPoint[1];
@@ -270,6 +289,56 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         } else if (firstClick && Math.abs(angleSum) >= (loopNum + 1) * LOOP_ANGLE){
             procs.add(paths.size()-1);
             clickChildButton(x,y);
+            loopNum++;
+        }
+        prevVector[0] = currVector[0];
+        prevVector[1] = currVector[1];
+        prevPoint[0] = x;
+        prevPoint[1] = y;
+    }*/
+
+    private void processMoveAction(float x, float y) {
+        float dx = x - prevPoint[0];
+        float dy = y - prevPoint[1];
+        // Ignore event if it's too close to previous
+        if (Math.abs(dx) <= TOUCH_SLOP && Math.abs(dy) <= TOUCH_SLOP) {
+            return;
+        }
+        // If the event is over the clear button
+        if (getChildAt(x - STROKE_WDITH / 2, y - STROKE_WDITH / 2).equals(clearButton)) {
+            return;
+        }
+        // If the event is over a new button
+        if (buttonBelowIndex[0] != getColIndexOfLocation(x) || buttonBelowIndex[1] != getRowIndexOfLocation(y)) {
+            resetOnButtonChange(x, y);
+        }
+        if (prevEventDown) {
+//            procs.add(paths.size()-1);
+            clickChildButton(x, y);
+            firstClick = !firstClick;
+            prevEventDown = false;
+        }
+//        path.moveTo(x, y);
+        path.lineTo(x, y);
+        animator.addSegment(path);
+        // If there aren't enough events to calculate angleSum
+        if (prevVector[0] == 0 && prevVector[1] == 0) {
+            prevVector[0] = x - prevPoint[0];
+            prevVector[1] = y - prevPoint[1];
+            return;
+        }
+        currVector[0] = x - prevPoint[0];
+        currVector[1] = y - prevPoint[1];
+        float dot = currVector[0] * prevVector[0] + currVector[1] * prevVector[1];
+        float det = currVector[0] * prevVector[1] - currVector[1] * prevVector[0];
+        angleSum += Math.abs(Math.atan2(det, dot));
+        if (!firstClick && Math.abs(angleSum) >= STRIKE_ANGLE) {
+//            procs.add(paths.size()-1);
+            clickChildButton(x, y);
+            firstClick = !firstClick;
+        } else if (firstClick && Math.abs(angleSum) >= (loopNum + 1) * LOOP_ANGLE) {
+//            procs.add(paths.size()-1);
+            clickChildButton(x, y);
             loopNum++;
         }
         prevVector[0] = currVector[0];
@@ -329,6 +398,49 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             case MotionEvent.ACTION_DOWN:
                 path = new Path();
                 path.moveTo(eventX, eventY);
+                path.lineTo(eventX + 1, eventY + 1);
+                animator.addContour(path);
+                downPoint[0] = eventX;
+                downPoint[1] = eventY;
+                resetOnDownAction(eventX, eventY);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                final int history = ev.getHistorySize();
+                for (int i = 0; i < history; i++){
+                    processMoveAction(ev.getHistoricalX(i), ev.getHistoricalY(i));
+                }
+                processMoveAction(eventX, eventY);
+                break;
+            case MotionEvent.ACTION_UP:
+                if (!firstClick) {
+//                    procs.add(paths.size()-1);
+                    notifyButtonListeners(getChildAt(eventX, eventY));
+                }
+                angleSum = 0;
+                firstClick = false;
+                loopNum = 0;
+        }
+        this.invalidate();
+        return false;
+    }
+
+    /*// old method for use with pre-first animation
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        final float eventX = ev.getX();
+        final float eventY = ev.getY();
+        // Event is on clear button
+        if (getChildAt(eventX - STROKE_WDITH/2, eventY - STROKE_WDITH/2).equals(clearButton)){
+            clearPath();
+            notifyButtonListeners(clearButton);
+            return false;
+        }
+
+        int action = ev.getAction();
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                path = new Path();
+                path.moveTo(eventX, eventY);
                 path.lineTo(eventX, eventY);
                 paths.add(path);
                 downPoint[0] = eventX;
@@ -353,5 +465,5 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         }
         this.invalidate();
         return false;
-    }
+    }*/
 }

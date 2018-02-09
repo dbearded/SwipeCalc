@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.drawable.ShapeDrawable;
@@ -27,7 +28,7 @@ class PathAnimator {
     private PathMeasure contourMeasure, segmentMeasure;
     private AnimatorSet animatorSet;
     private ArrayList<CircleHolder> tracePoints = new ArrayList<>();
-    private int newTraceCount = 0;
+//    private int newTraceCount = 0;
     private int contourCount = 0;
     private float distToNextTrace;
     private float segmentLength;
@@ -38,6 +39,10 @@ class PathAnimator {
         contourMeasure = new PathMeasure();
         segmentMeasure = new PathMeasure();
         animatorSet = new AnimatorSet();
+        for (int i = 0; i < 8; i++) {
+            CircleHolder circle = new CircleHolder(TRACE_START_DIAMETER, i*150, i*150);
+            tracePoints.add(circle);
+        }
     }
 
     // adds segment to current contour
@@ -53,7 +58,7 @@ class PathAnimator {
     }
 
     // New contour is created for every action down event
-    // that isn't separated by a call to resetPath()
+    // that isn't separated by a call to reset()
     // Method updates previous contour if needed and current path
     void addContour(Path contour) {
         contourCount++;
@@ -63,6 +68,7 @@ class PathAnimator {
             contourMeasure.nextContour();
         }
         contourAdded = true;
+        distToNextTrace = 0;
         addSegment(contour);
         contourAdded = false;
     }
@@ -70,8 +76,10 @@ class PathAnimator {
     private void addTracePoints() {
         float[] pos = new float[2];
         float[] tan = new float[2];
-        float tempDist = contourAdded ? TRACE_CENTER_DISTANCE : distToNextTrace;
-        int tracesToAdd = (int) ((segmentLength - distToNextTrace) / TRACE_CENTER_DISTANCE);
+        float tempDist = distToNextTrace;
+//        int tracesToAdd = (int) ((segmentLength - distToNextTrace) / TRACE_CENTER_DISTANCE);
+        int tracesToAdd = 1;
+        int newTraceCount = 0;
         while (newTraceCount < tracesToAdd){
             segmentMeasure.getPosTan(tempDist, pos, tan);
             CircleHolder circle = new CircleHolder(TRACE_START_DIAMETER, pos[0], pos[1]);
@@ -81,9 +89,10 @@ class PathAnimator {
             newTraceCount++;
         }
         distToNextTrace = TRACE_CENTER_DISTANCE - ((segmentLength - distToNextTrace) % TRACE_CENTER_DISTANCE);
+//        addAnimators();
     }
 
-    void resetPath() {
+    void reset() {
         tracePoints.clear();
         contourCount = 0;
         distToNextTrace = TRACE_CENTER_DISTANCE;
@@ -94,7 +103,7 @@ class PathAnimator {
     }
 
     // add animators to any new trace points
-    private void addAnimators() {
+    /*private void addAnimators() {
         int size = tracePoints.size();
         int initialCount = newTraceCount;
         AnimatorSet.Builder builder = null;
@@ -105,7 +114,7 @@ class PathAnimator {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     CircleHolder tempCircle = (CircleHolder) ((ObjectAnimator) animation).getTarget();
-                    // Have to check first in case it was removed with resetPath()
+                    // Have to check first in case it was removed with reset()
                     if (tracePoints.contains(tempCircle)){
                         tracePoints.remove(tempCircle);
                     }
@@ -123,7 +132,7 @@ class PathAnimator {
         if (!animatorSet.isStarted()) {
             animatorSet.start();
         }
-    }
+    }*/
 
     void updateCanvas(Canvas canvas){
         for (int i = 0; i < tracePoints.size(); i++) {
@@ -135,7 +144,7 @@ class PathAnimator {
         }
     }
 
-    class CircleHolder {
+    private class CircleHolder {
         private float x, y, diameter;
         private ShapeDrawable shape;
 
@@ -143,6 +152,7 @@ class PathAnimator {
             OvalShape circle = new OvalShape();
             circle.resize(diameter, diameter);
             this.shape = new ShapeDrawable(circle);
+            shape.getPaint().setColor(Color.RED);
             this.x = x;
             this.y = y;
             this.diameter = diameter;
@@ -175,6 +185,10 @@ class PathAnimator {
 
         void setY(float y) {
             this.y = y;
+        }
+
+        void setColor(int color){
+            shape.getPaint().setColor(color);
         }
     }
 }
