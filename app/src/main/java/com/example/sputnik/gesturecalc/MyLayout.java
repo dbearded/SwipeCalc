@@ -14,6 +14,7 @@ import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -35,11 +36,12 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     private ButtonTextView clearButton;
     private Path entirePath = new Path();
     private Path path;
-//    private List<Path> paths = new LinkedList<>();
+    private List<Path> paths = new LinkedList<>();
 //    private List<Integer> procs = new ArrayList<>();
     private Paint paint;
     private Paint clickedPaint;
     private PathAnimator animator;
+    private Rect offsetViewBounds = new Rect();
     private float[] downPoint = new float[2];
     private float[] prevPoint = new float[2];
     private float[] prevVector = new float[2];
@@ -73,11 +75,15 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         setup();
     }
 
+    public void setPathAnimator(PathAnimator animator){
+        this.animator = animator;
+    }
+
     void setup(){
         setupPaint();
         setupPath();
         this.setWillNotDraw(false);
-        animator = new PathAnimator();
+//        animator = new PathAnimator();
     }
 
     void setupPaint(){
@@ -156,8 +162,12 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     void clearPath(){
         entirePath.reset();
         path.reset();
+        /*for (Path path :
+                paths) {
+            path.reset();
+        }*/
+        paths.clear();
         animator.reset();
-        this.invalidate();
     }
 
     /* old method for use with pre-first animation
@@ -180,9 +190,15 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
-        animator.updateCanvas(canvas);
-        if (animator.isRunning()){
-            invalidate();
+        if (animator != null) {
+            animator.updateCanvas(canvas);
+        /*int count = paths.size();
+        for (int i = 0; i < count; i++) {
+            canvas.drawPath(paths.get(i), paint);
+        }*/
+            if (animator.isRunning()){
+                invalidate();
+            }
         }
     }
 
@@ -298,6 +314,9 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     }*/
 
     private void processMoveAction(float x, float y) {
+        if (getChildAt(x - STROKE_WDITH/2, y - STROKE_WDITH/2).equals(clearButton)) {
+            return;
+        }
         float dx = x - prevPoint[0];
         float dy = y - prevPoint[1];
         // Ignore event if it's too close to previous
@@ -318,9 +337,13 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             firstClick = !firstClick;
             prevEventDown = false;
         }
+        /*Path tempPath = new Path();
+        tempPath.moveTo(x,y);
+        tempPath.lineTo(x,y+0.01f);
+        paths.add(tempPath);*/
 //        path.moveTo(x, y);
         path.lineTo(x, y);
-        animator.addSegment(path);
+        animator.updatePath(path, false);
         // If there aren't enough events to calculate angleSum
         if (prevVector[0] == 0 && prevVector[1] == 0) {
             prevVector[0] = x - prevPoint[0];
@@ -361,7 +384,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
 
     private ButtonTextView getChildAt(float x, float y){
         ButtonTextView button = null;
-        Rect offsetViewBounds = new Rect();
+//        offsetViewBounds = new Rect();
         int count = getChildCount();
         for (int i =0; i < count; i++) {
             button = (ButtonTextView) getChildAt(i);
@@ -388,18 +411,29 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         final float eventY = ev.getY();
         // Event is on clear button
         if (getChildAt(eventX - STROKE_WDITH/2, eventY - STROKE_WDITH/2).equals(clearButton)){
+            // clear any history
+            final int count = ev.getHistorySize();
+            for (int i = 0; i < count; i++) {
+                ev.getHistoricalX(i);
+            }
             clearPath();
             notifyButtonListeners(clearButton);
+            this.invalidate();
             return false;
         }
 
         int action = ev.getAction();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                path = new Path();
+//                path = new Path();
                 path.moveTo(eventX, eventY);
-                path.lineTo(eventX + 1, eventY + 1);
-                animator.addContour(path);
+                // Move a negligible amount for PathMeasure functions to work
+                path.lineTo(eventX+0.01f, eventY+0.01f);
+                /*Path tempPath = new Path();
+                tempPath.moveTo(eventX, eventY);
+                tempPath.lineTo(eventX, eventY+0.01f);
+                paths.add(tempPath);*/
+                animator.updatePath(path, true);
                 downPoint[0] = eventX;
                 downPoint[1] = eventY;
                 resetOnDownAction(eventX, eventY);
@@ -419,6 +453,21 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
                 angleSum = 0;
                 firstClick = false;
                 loopNum = 0;
+                /*int count = paths.size();
+                PathMeasure measure = new PathMeasure();
+                float[] pos = new float[2];
+                float[] tan = new float[2];
+                for (int i = 0; i < count; i++) {
+                    measure.setPath(paths.get(i),false);
+                    measure.getPosTan(measure.getLength(), pos, tan);
+                    System.out.println("path #: " + i + "(" + pos[0] + ", " + pos[1] + ")");
+                }*/
+                /*int count = animator.circles.size();
+                PathAnimator.CircleHolder circle;
+                for (int i = 0; i < count; i++) {
+                    circle = animator.circles.get(i);
+                    System.out.println("circle #: " + i + "(" + circle.getX() + ", " + circle.getY() + ")");
+                }*/
         }
         this.invalidate();
         return false;

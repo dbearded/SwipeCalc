@@ -20,5 +20,8 @@
     <string name="percent">%</string>
     <string name="parentheses">()</string>
     <string name="clear">C</string>
-
+    
+    <string-array name="spinner_entries">
+        <item>Default</item>
+    </string-array>
 </resources>
