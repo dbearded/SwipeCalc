@@ -2,7 +2,6 @@ package com.example.sputnik.gesturecalc;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -19,16 +18,16 @@ import java.util.ArrayList;
 
 public class PathAnimator {
 
-    private static float CIRCLE_START_DIAMETER = 25f;
-    private static float CIRCLE_END_DIAMETER = 0f;
-    private static float CIRCLE_CENTER_DISTANCE = 50f;
-    private static long ANIMATION_DURATION = 1000;
-    private static int OPACITY = 255;
+    private static float circleStartDiameter = 16f;
+    private static float circleEndDiameter = 0f;
+    private static float circleCenterSpacing = 16f;
+    private static long animationDuration = 0;
+    private static int opacity = 164;
 
     private Path path;
     private PathMeasure pathMeasure;
-    private AnimatorSet animatorSet;
     private ArrayList<CircleHolder> circles = new ArrayList<>();
+    private ArrayList<CircleHolder> circleSubset = new ArrayList<>();
     private int newCircleCount = 0;
     private int contourCount = 0;
     private float distToNextTrace;
@@ -36,15 +35,28 @@ public class PathAnimator {
     private float[] pos = new float[2];
     private float[] tan = new float[2];
     private int animationCount;
+    private boolean drawingSubset = false;
 
     public PathAnimator(){
         path = new Path();
         pathMeasure = new PathMeasure();
-        animatorSet = new AnimatorSet();
-        /*for (int i = 0; i < 12; i++) {
-            CircleHolder circle = new CircleHolder(CIRCLE_START_DIAMETER, i*50, i*50);
-            circles.add(circle);
-        }*/
+    }
+
+    public void reDrawTo(int progress) {
+        circleSubset = (ArrayList<CircleHolder>) circles.clone();
+        int count = (int) (((float)(100 - progress))/((float) 100)* circleSubset.size());
+        for (int i = 0; i < count-1; i++) {
+            circleSubset.remove(circleSubset.size()-1);
+        }
+        drawingSubset = true;
+    }
+
+    void addSpecial(float x, float y){
+        addCircle(x,y);
+        CircleHolder specialCircle = circles.get(circles.size() - 1);
+        specialCircle.setColor(Color.RED);
+        specialCircle.setDiameter(18f);
+        addAnimators();
     }
 
     // updates the current contour by replacing it with the parameter
@@ -59,7 +71,7 @@ public class PathAnimator {
             pathMeasure.getPosTan(0f, pos, tan);
             addCircle(pos[0], pos[1]);
             // Add any additional points in contour
-            distToNextTrace = CIRCLE_CENTER_DISTANCE;
+            distToNextTrace = circleCenterSpacing;
             contourLength = 0;
             addAnimators();
         }
@@ -70,16 +82,16 @@ public class PathAnimator {
         }
         float tempDist = distToNextTrace;
         // 1 is added to account for the segment being longer than distToNextTrace
-        int circlesToAdd = 1 + (int) ((segmentLength - distToNextTrace) / CIRCLE_CENTER_DISTANCE);
+        int circlesToAdd = 1 + (int) ((segmentLength - distToNextTrace) / circleCenterSpacing);
         for (int i = 0; i < circlesToAdd; i++) {
-            pathMeasure.getPosTan(contourLength +(i+1)*tempDist, pos, tan);
+            pathMeasure.getPosTan(contourLength + tempDist, pos, tan);
             addCircle(pos[0], pos[1]);
-            // Because tempDist is something else to begin with
-            tempDist = CIRCLE_CENTER_DISTANCE;
+            contourLength += tempDist;
+            tempDist = circleCenterSpacing;
         }
         addAnimators();
         // update private fields since added a segment
-        distToNextTrace = CIRCLE_CENTER_DISTANCE - ((segmentLength - distToNextTrace) % CIRCLE_CENTER_DISTANCE);
+        distToNextTrace = circleCenterSpacing - ((segmentLength - distToNextTrace) % circleCenterSpacing);
         path.reset();
         path.addPath(newPath);
         pathMeasure.setPath(path, false);
@@ -90,15 +102,17 @@ public class PathAnimator {
     }
 
     private void addCircle(float x, float y) {
-        CircleHolder circle = new CircleHolder(CIRCLE_START_DIAMETER, x - CIRCLE_START_DIAMETER / 2, y - CIRCLE_START_DIAMETER / 2);
+        CircleHolder circle = new CircleHolder(circleStartDiameter, x - circleStartDiameter / 2, y - circleStartDiameter / 2);
         circles.add(circle);
         newCircleCount++;
     }
 
     void reset() {
         circles.clear();
+        circleSubset.clear();
+        drawingSubset = false;
         contourCount = 0;
-        distToNextTrace = CIRCLE_CENTER_DISTANCE;
+        distToNextTrace = circleCenterSpacing;
         path.reset();
         pathMeasure.setPath(path, false);
     }
@@ -109,10 +123,15 @@ public class PathAnimator {
 
     // add animators to any new trace points
     private void addAnimators() {
+        // Setting for disabling animations
+        if (animationDuration == 0){
+            newCircleCount = 0;
+            return;
+        }
         int size = circles.size();
         while(newCircleCount > 0){
-            ObjectAnimator animator = ObjectAnimator.ofFloat(circles.get(size - newCircleCount), "diameter", CIRCLE_END_DIAMETER);
-            animator.setDuration(ANIMATION_DURATION);
+            ObjectAnimator animator = ObjectAnimator.ofFloat(circles.get(size - newCircleCount), "diameter", circleEndDiameter);
+            animator.setDuration(animationDuration);
             animator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
@@ -133,8 +152,15 @@ public class PathAnimator {
     }
 
     void updateCanvas(Canvas canvas){
-        for (int i = 0; i < circles.size(); i++) {
-            CircleHolder circle = circles.get(i);
+        ArrayList<CircleHolder> tempCircles;
+        if (drawingSubset) {
+            tempCircles = circleSubset;
+            drawingSubset = false;
+        } else {
+            tempCircles = circles;
+        }
+        for (int i = 0; i < tempCircles.size(); i++) {
+            CircleHolder circle = tempCircles.get(i);
             canvas.save();
             canvas.translate(circle.getX(), circle.getY());
             circle.getShape().draw(canvas);
@@ -151,12 +177,12 @@ public class PathAnimator {
             OvalShape circle = new OvalShape();
             circle.resize(diameter, diameter);
             this.shape = new ShapeDrawable(circle);
-            shape.getPaint().setColor(Color.RED);
-            shape.getPaint().setAlpha(OPACITY);
+            shape.getPaint().setColor(Color.parseColor("#a46fa7be"));
+            shape.getPaint().setAlpha(PathAnimator.opacity);
             this.x = x;
             this.y = y;
             this.diameter = diameter;
-            this.opacity = OPACITY;
+            this.opacity = PathAnimator.opacity;
         }
 
         float getX() {
@@ -201,43 +227,43 @@ public class PathAnimator {
         }
     }
 
-    public void setCIRCLE_START_DIAMETER(float diameter){
-        CIRCLE_START_DIAMETER = diameter;
+    public void setCircleStartDiameter(float diameter){
+        circleStartDiameter = diameter;
     }
 
-    public void setCIRCLE_END_DIAMETER(float diameter){
-        CIRCLE_END_DIAMETER = diameter;
+    public void setCircleEndDiameter(float diameter){
+        circleEndDiameter = diameter;
     }
 
-    public void setCIRCLE_CENTER_DISTANCE(float distance){
-        CIRCLE_CENTER_DISTANCE = distance;
+    public void setCircleCenterSpacing(float spacing){
+        circleCenterSpacing = spacing;
     }
 
-    public void setOPACITY(int opacity){
-        OPACITY = opacity;
+    public void setOpacity(int opacity){
+        PathAnimator.opacity = opacity;
     }
 
-    public void setANIMATION_DURATION(int duration){
-        ANIMATION_DURATION = duration;
+    public void setAnimationDuration(int duration){
+        animationDuration = duration;
     }
 
-    public float getCIRCLE_START_DIAMETER(){
-        return CIRCLE_START_DIAMETER;
+    public float getCircleStartDiameter(){
+        return circleStartDiameter;
     }
 
-    public float getCIRCLE_END_DIAMETER(){
-        return CIRCLE_END_DIAMETER;
+    public float getCircleEndDiameter(){
+        return circleEndDiameter;
     }
 
-    public float getCIRCLE_CENTER_DISTANCE(){
-        return CIRCLE_CENTER_DISTANCE;
+    public float getCircleCenterSpacing(){
+        return circleCenterSpacing;
     }
 
-    public int getOPACITY(){
-        return OPACITY;
+    public int getOpacity(){
+        return opacity;
     }
 
     public long getANIMATION_DURATION(){
-        return ANIMATION_DURATION;
+        return animationDuration;
     }
 }

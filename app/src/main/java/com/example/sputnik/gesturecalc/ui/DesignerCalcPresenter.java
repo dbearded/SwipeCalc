@@ -5,7 +5,6 @@ import android.support.v7.widget.AppCompatSeekBar;
 import android.widget.TextView;
 
 import com.example.sputnik.gesturecalc.DesignerActivity;
-import com.example.sputnik.gesturecalc.MainActivity;
 import com.example.sputnik.gesturecalc.MyLayout;
 import com.example.sputnik.gesturecalc.PathAnimator;
 import com.example.sputnik.gesturecalc.R;
@@ -26,7 +25,7 @@ public class DesignerCalcPresenter implements Observer {
     private TextView preview;
     private MyLayout layout;
     private AppCompatEditText sizeEdit, spacingEdit, durationEdit, opacityEdit;
-    private AppCompatSeekBar sizeBar, spacingBar, durationBar, opacityBar;
+    private AppCompatSeekBar sizeBar, spacingBar, durationBar, opacityBar, pathBar;
     private PathAnimator animator;
 
     public DesignerCalcPresenter(DesignerActivity activity){
@@ -44,21 +43,23 @@ public class DesignerCalcPresenter implements Observer {
         spacingBar = activity.findViewById(R.id.seekBarSpacing);
         durationBar = activity.findViewById(R.id.seekBarDuration);
         opacityBar = activity.findViewById(R.id.seekBarOpacity);
+        pathBar = activity.findViewById(R.id.seekBarPath);
 
         animator = new PathAnimator();
         layout.setPathAnimator(animator);
-        float size = animator.getCIRCLE_START_DIAMETER();
+        float size = animator.getCircleStartDiameter();
         sizeEdit.setText(Float.toString(size));
         sizeBar.setProgress((int) size);
-        float distance = animator.getCIRCLE_CENTER_DISTANCE();
+        float distance = animator.getCircleCenterSpacing();
         spacingEdit.setText(Float.toString(distance));
         spacingBar.setProgress((int) distance);
         long duration = animator.getANIMATION_DURATION();
         durationEdit.setText(Long.toString(duration));
         durationBar.setProgress((int) duration);
-        int opacity = animator.getOPACITY();
+        int opacity = animator.getOpacity();
         opacityEdit.setText(Integer.toString(opacity));
         opacityBar.setProgress(opacity);
+        pathBar.setProgress(pathBar.getMax());
     }
 
     // Updates model when a button is pressed
@@ -66,8 +67,10 @@ public class DesignerCalcPresenter implements Observer {
         switch(symbol){
             case "C":
                 expression.clear();
+                pathBar.setProgress(pathBar.getMax());
                 updateDisplay("");
                 updatePreview("");
+                layout.invalidate();
                 break;
             case "=":
                 updateDisplay(expression.getValue());
@@ -85,26 +88,32 @@ public class DesignerCalcPresenter implements Observer {
     }
 
     public void settingsChanged(){
+
         String duration = durationEdit.getText().toString();
         if (duration.isEmpty()) {
             return;
         }
-        animator.setANIMATION_DURATION(Integer.parseInt(duration));
+        animator.setAnimationDuration(Integer.parseInt(duration));
         String distance = spacingEdit.getText().toString();
         if (distance.isEmpty()) {
             return;
         }
-        animator.setCIRCLE_CENTER_DISTANCE(Float.parseFloat(distance));
+        animator.setCircleCenterSpacing(Float.parseFloat(distance));
         String diameter = sizeEdit.getText().toString();
         if (diameter.isEmpty()) {
             return;
         }
-        animator.setCIRCLE_START_DIAMETER(Float.parseFloat(diameter));
+        animator.setCircleStartDiameter(Float.parseFloat(diameter));
         String opacity = opacityEdit.getText().toString();
         if (opacity.isEmpty()) {
             return;
         }
-        animator.setOPACITY(Integer.parseInt(opacity));
+        animator.setOpacity(Integer.parseInt(opacity));
+        int progress = pathBar.getProgress();
+        if (progress < pathBar.getMax()){
+            animator.reDrawTo(progress);
+            layout.invalidate();
+        }
     }
 
     @Override

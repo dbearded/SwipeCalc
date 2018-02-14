@@ -298,22 +298,20 @@
         android:id="@+id/seekBarSize"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:max="250"
-        tools:progress="25"
+        android:max="100"
         app:layout_constraintBottom_toBottomOf="@+id/textViewSize"
         app:layout_constraintEnd_toStartOf="@+id/editNumberSize"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_weight="3"
         app:layout_constraintStart_toEndOf="@+id/textViewSize"
-        app:layout_constraintTop_toTopOf="@+id/textViewSize" />
+        app:layout_constraintTop_toTopOf="@+id/textViewSize"
+        tools:progress="25" />
 
     <android.support.v7.widget.AppCompatTextView
         android:id="@+id/textViewSize"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginRight="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:gravity="center|end"
         android:text="Size"
         android:textSize="14sp"
@@ -364,14 +362,14 @@
         android:id="@+id/seekBarSpacing"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:max="250"
-        tools:progress="160"
+        android:max="150"
         app:layout_constraintBottom_toBottomOf="@+id/textViewSpacing"
         app:layout_constraintEnd_toStartOf="@+id/editNumberSpacing"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_weight="3"
         app:layout_constraintStart_toEndOf="@+id/textViewSpacing"
-        app:layout_constraintTop_toTopOf="@+id/textViewSpacing" />
+        app:layout_constraintTop_toTopOf="@+id/textViewSpacing"
+        tools:progress="160" />
 
     <android.support.v7.widget.AppCompatEditText
         android:id="@+id/editNumberSpacing"
@@ -439,30 +437,29 @@
         android:id="@+id/preview"
         style="@style/Preview"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginRight="8dp"
+        android:layout_height="wrap_content"
         android:gravity="center|end"
+        android:maxLines="2"
         android:text="2500.12345678"
         android:textSize="14sp"
-        android:maxLines="2"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/gridLayout"
         app:layout_constraintEnd_toStartOf="@+id/delete"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/display"
-        app:layout_constraintTop_toTopOf="@+id/display"
         app:layout_constraintVertical_weight="2" />
 
     <android.support.v7.widget.AppCompatTextView
         android:id="@+id/display"
         style="@style/Display"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginLeft="16dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
         android:gravity="center|right|end"
         android:maxLines="2"
-        android:text="5x5x100"
+        android:text="5x5x100\n+3.141592654"
         android:textSize="14sp"
         app:layout_constraintBottom_toTopOf="@+id/gridLayout"
         app:layout_constraintEnd_toStartOf="@+id/preview"
@@ -470,9 +467,7 @@
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintHorizontal_weight="3"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/delete"
-        app:layout_constraintVertical_bias="0.0"
-        app:layout_constraintVertical_weight="2"/>
+        app:layout_constraintVertical_weight="2" />
 
     <android.support.v7.widget.AppCompatTextView
         android:id="@+id/textViewOpacity"
@@ -564,5 +559,28 @@
         android:text="Line"
         app:layout_constraintStart_toEndOf="@+id/switchCircleLine"
         app:layout_constraintTop_toTopOf="@+id/textViewCircle" />
+
+    <android.support.v7.widget.AppCompatTextView
+        android:id="@+id/textViewPath"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="right"
+        android:text="Path"
+        app:layout_constraintEnd_toEndOf="@+id/textViewOpacity"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewCircle" />
+
+    <android.support.v7.widget.AppCompatSeekBar
+        android:id="@+id/seekBarPath"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:max="100"
+        android:progress="100"
+        app:layout_constraintEnd_toStartOf="@+id/delete"
+        app:layout_constraintStart_toEndOf="@+id/textViewPath"
+        app:layout_constraintTop_toTopOf="@+id/textViewPath" />
 
 </android.support.constraint.ConstraintLayout>

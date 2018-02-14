@@ -23,7 +23,7 @@ import com.example.sputnik.gesturecalc.ui.DesignerCalcPresenter;
 
 public class DesignerActivity extends AppCompatActivity {
     MyLayout layout;
-    AppCompatSeekBar sizeBar, spacingBar, durationBar, opacityBar;
+    AppCompatSeekBar sizeBar, spacingBar, durationBar, opacityBar, pathBar;
     AppCompatEditText sizeEdit, spacingEdit, durationEdit, opacityEdit;
     SwitchCompat shapeSwitch;
     AppCompatSpinner spinner;
@@ -154,6 +154,7 @@ public class DesignerActivity extends AppCompatActivity {
         spacingBar = findViewById(R.id.seekBarSpacing);
         durationBar = findViewById(R.id.seekBarDuration);
         opacityBar = findViewById(R.id.seekBarOpacity);
+        pathBar = findViewById(R.id.seekBarPath);
 
         sizeEdit = findViewById(R.id.editNumberSize);
         spacingEdit = findViewById(R.id.editNumberSpacing);
@@ -169,31 +170,29 @@ public class DesignerActivity extends AppCompatActivity {
         spacingBar.setOnSeekBarChangeListener(new MySeekBarChangeListener<>(spacingEdit, presenter));
         durationBar.setOnSeekBarChangeListener(new MySeekBarChangeListener<>(durationEdit, presenter));
         opacityBar.setOnSeekBarChangeListener(new MySeekBarChangeListener<>(opacityEdit, presenter));
+        pathBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    presenter.settingsChanged();
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         sizeEdit.addTextChangedListener(new MyTextWatcher<>(sizeBar, new LinearInterpolator(), presenter, 5));
         spacingEdit.addTextChangedListener(new MyTextWatcher<>(spacingBar, new LinearInterpolator(), presenter, 5));
         durationEdit.addTextChangedListener(new MyTextWatcher<>(durationBar, new LinearInterpolator(), presenter, 50));
         opacityEdit.addTextChangedListener(new MyTextWatcher<>(opacityBar, new LinearInterpolator(), presenter, 0));
-//        opacityEdit.addTextChangedListener(new TextWatcher() {
-//            @Override
-//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//
-//            }
-//
-//            @Override
-//            public void onTextChanged(CharSequence s, int start, int before, int count) {
-//
-//            }
-//
-//            @Override
-//            public void afterTextChanged(Editable s) {
-//                String text = s.toString();
-//                if (text.isEmpty()) {
-//                    return;
-//                }
-//                opacityBar.setProgress(Integer.valueOf(text));
-//            }
-//        });
 
         shapeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override

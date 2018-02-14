@@ -2,8 +2,6 @@ package com.example.sputnik.gesturecalc;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Build;
@@ -14,8 +12,9 @@ import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+
+import static java.lang.Math.*;
 
 /**
  * Created by Sputnik on 2/1/2018.
@@ -23,38 +22,71 @@ import java.util.List;
 public class MyLayout extends android.support.v7.widget.GridLayout {
     private final float TOUCH_SLOP = 16f;
     private final float STROKE_WDITH = 18f;
-    // Envisioned for animation
-    private final float MIN_EVENT_DIST = 16f;
     // Strike angle is 71/180*3.14 = 1.24f
     // Strike angle is 65/180*3.14 = 1.13f
     // Strike angle is 61/180*3.14 = 1.064f
     // Strike angle is 55/180*3.14 = 0.960
     private final float STRIKE_ANGLE = 1.24f;
     // Loop angle is 260/180*3.14
-    private final float LOOP_ANGLE = 4.54f;
+    private final float FIRST_LOOP_ANGLE = 4.54f;
+    private final float ADDTL_LOOP_ANGLE = 6.28f;
+    // Zig-zag angle is 100/180*3.14
+    private final float ZIG_ZAG_ANGLE = 1.744f;
+    private float MIN_ARC_LENGTH;
+    private float MIN_LOOP_LENGTH;
+    // Local loop angle is 60/180*3.14;
+    private float MAX_LOCAL_LOOP_ANGLE = 1.047f;
+    private boolean firstLoop;
+    private double angleLoop;
+    private float clearanceDist;
+    private double prevAngle;
+    private double suspectAngle;
+    private float angleSumAbsValue;
+    boolean firstClick = false;
+    boolean secondClick = false;
+
+    private float cuspAngleSum;
+    // Cusp start angle is 30/180*3.14
+    // Cusp start angle is 60/180*3.14
+    // Cusp start angle is 50/180*3.14
+    private float CUSP_START_ANGLE = 0.872f;
+    // Cust threshold angle is 150/180*3.14
+    private float CUSP_THRESHOLD_ANGLE = 2.617f;
+    private int CUSP_MAX_SEGEMENT_COUNT = 3;
+    private int cuspSegmentCount;
+
+    private float zzInterDist;
+    private float ZZ_THRESHOLD_DIST = 80;
+    private boolean zzBendCW, zzBendCCW;
+
+    // Bend hysteresis angle is 5/180*3.14
+    private float BEND_HYSTERESIS = 0.872f;
+    // Bend threshold is 120/180*3.14;
+    private float BEND_THRESHOLD = 2.093f;
+    private float cwAngleSum;
+    private float ccwAngleSum;
+    private boolean bendCW, bendCCW;
+    private float BEND_MAX_HYSTERESIS_ANGLE = 0.174f;
+    private float cwHystSum;
+    private float ccwHystSum;
+
     private List<ButtonListener> buttonListeners = new ArrayList<ButtonListener>();
     private ButtonTextView clearButton;
-    private Path entirePath = new Path();
     private Path path;
-    private List<Path> paths = new LinkedList<>();
-//    private List<Integer> procs = new ArrayList<>();
-    private Paint paint;
-    private Paint clickedPaint;
     private PathAnimator animator;
     private Rect offsetViewBounds = new Rect();
-    private float[] downPoint = new float[2];
     private float[] prevPoint = new float[2];
     private float[] prevVector = new float[2];
     private float[] currVector = new float[2];
-    private float angleSum;
-    private float WIDTH, HEIGHT, COLUMN_COUNT, ROW_COUNT, PX_PER_COL, PX_PER_ROW;
+    private float PX_PER_COL;
+    private float PX_PER_ROW;
     private int[] buttonBelowIndex = new int[2];
     // [0] = top left x-coord, [1] = top left y-coord,
     // [2] = top right x-coord, [4] = bottom left y-coord
     private int[] clearButtonBoundary = new int[4];
-    private int loopNum = 0;
-    boolean firstClick = false;
     boolean prevEventDown = false;
+
+    Path path3 = new Path();
 
     interface ButtonListener {
         void buttonPressed(String input);
@@ -80,46 +112,13 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     }
 
     void setup(){
-        setupPaint();
-        setupPath();
-        this.setWillNotDraw(false);
-//        animator = new PathAnimator();
-    }
-
-    void setupPaint(){
-//            paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint = new Paint();
-        paint.setDither(true);
-        paint.setColor(getResources().getColor(R.color.swipe));
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeJoin(Paint.Join.ROUND);
-        paint.setStrokeCap(Paint.Cap.ROUND);
-        paint.setStrokeWidth(16);
-        setupClickedPaint();
-//            this.setBackgroundColor(Color.TRANSPARENT);
-    }
-
-    void setupClickedPaint(){
-        clickedPaint = new Paint();
-        clickedPaint.setDither(true);
-        clickedPaint.setColor(Color.RED);
-        clickedPaint.setStyle(Paint.Style.STROKE);
-        clickedPaint.setStrokeJoin(Paint.Join.ROUND);
-        clickedPaint.setStrokeCap(Paint.Cap.ROUND);
-        clickedPaint.setStrokeWidth(STROKE_WDITH);
-    }
-
-    void setupPath(){
         path = new Path();
+        this.setWillNotDraw(false);
     }
 
     void setupSize(){
-        WIDTH = getWidth();
-        HEIGHT = getHeight();
-        COLUMN_COUNT = getColumnCount();
-        ROW_COUNT = getRowCount();
-        PX_PER_COL = WIDTH / COLUMN_COUNT;
-        PX_PER_ROW = HEIGHT / ROW_COUNT;
+        PX_PER_COL = (float) getWidth() / (float) getColumnCount();
+        PX_PER_ROW = (float) getHeight() / (float) getRowCount();
 
         final View clear = findViewById(R.id.clear);
         ViewTreeObserver viewTreeObserver = clear.getViewTreeObserver();
@@ -136,6 +135,9 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
                 }
             });
         }
+
+        MIN_ARC_LENGTH = ((PX_PER_COL + PX_PER_ROW)/2)/4;
+        MIN_LOOP_LENGTH = MIN_ARC_LENGTH * 4;
     }
 
     int getColIndexOfLocation(float x){
@@ -146,56 +148,16 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         return ((int) (y) / ((int) PX_PER_ROW));
     }
 
-    /* // old method for use with pre-first animation
     void clearPath(){
-        entirePath.reset();
         path.reset();
-        for (Path path :
-                paths) {
-            path.reset();
-        }
-        paths.clear();
-        procs.clear();
-        this.invalidate();
-    }*/
-
-    void clearPath(){
-        entirePath.reset();
-        path.reset();
-        /*for (Path path :
-                paths) {
-            path.reset();
-        }*/
-        paths.clear();
         animator.reset();
     }
-
-    /* old method for use with pre-first animation
-    @Override
-    protected void dispatchDraw(Canvas canvas) {
-        super.dispatchDraw(canvas);
-        final int size = paths.size();
-        int j = 0;
-        final int sizeProcs = procs.size();
-        for (int i = 0; i < size; i++) {
-            if (!procs.isEmpty() && i == procs.get(j)) {
-                canvas.drawPath(paths.get(i), clickedPaint);
-                j += (j + 1) < sizeProcs ? 1 : 0;
-            } else {
-                canvas.drawPath(paths.get(i), paint);
-            }
-        }
-    }*/
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
         if (animator != null) {
             animator.updateCanvas(canvas);
-        /*int count = paths.size();
-        for (int i = 0; i < count; i++) {
-            canvas.drawPath(paths.get(i), paint);
-        }*/
             if (animator.isRunning()){
                 invalidate();
             }
@@ -261,58 +223,6 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         buttonListeners.remove(listener);
     }
 
-    /* // Old code for first path animation
-    private void processMoveAction(float x, float y){
-        float dx = x - prevPoint[0];
-        float dy = y - prevPoint[1];
-        // Ignore event if it's too close to previous
-        if (Math.abs(dx) <= TOUCH_SLOP && Math.abs(dy) <= TOUCH_SLOP){
-            return;
-        }
-        // If the event is over the clear button
-        if (getChildAt(x - STROKE_WDITH/2, y - STROKE_WDITH/2).equals(clearButton)){
-            return;
-        }
-        // If the event is over a new button
-        if (buttonBelowIndex[0] != getColIndexOfLocation(x) || buttonBelowIndex[1] != getRowIndexOfLocation(y)){
-            resetOnButtonChange(x, y);
-        }
-        if (prevEventDown){
-            procs.add(paths.size()-1);
-            clickChildButton(x, y);
-            firstClick = !firstClick;
-            prevEventDown = false;
-        }
-        path = new Path();
-        path.moveTo(x, y);
-        path.lineTo(x, y);
-        paths.add(path);
-        // If there aren't enough events to calculate angleSum
-        if (prevVector[0] == 0 && prevVector[1] == 0){
-            prevVector[0] = x - prevPoint[0];
-            prevVector[1] = y - prevPoint[1];
-            return;
-        }
-        currVector[0] = x - prevPoint[0];
-        currVector[1] = y - prevPoint[1];
-        float dot = currVector[0]*prevVector[0]+currVector[1]*prevVector[1];
-        float det = currVector[0]*prevVector[1]-currVector[1]*prevVector[0];
-        angleSum += Math.abs(Math.atan2(det, dot));
-        if (!firstClick && Math.abs(angleSum) >= STRIKE_ANGLE){
-            procs.add(paths.size()-1);
-            clickChildButton(x, y);
-            firstClick = !firstClick;
-        } else if (firstClick && Math.abs(angleSum) >= (loopNum + 1) * LOOP_ANGLE){
-            procs.add(paths.size()-1);
-            clickChildButton(x,y);
-            loopNum++;
-        }
-        prevVector[0] = currVector[0];
-        prevVector[1] = currVector[1];
-        prevPoint[0] = x;
-        prevPoint[1] = y;
-    }*/
-
     private void processMoveAction(float x, float y) {
         if (getChildAt(x - STROKE_WDITH/2, y - STROKE_WDITH/2).equals(clearButton)) {
             return;
@@ -320,7 +230,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         float dx = x - prevPoint[0];
         float dy = y - prevPoint[1];
         // Ignore event if it's too close to previous
-        if (Math.abs(dx) <= TOUCH_SLOP && Math.abs(dy) <= TOUCH_SLOP) {
+        if (abs(dx) <= TOUCH_SLOP && abs(dy) <= TOUCH_SLOP) {
             return;
         }
         // If the event is over the clear button
@@ -332,19 +242,13 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             resetOnButtonChange(x, y);
         }
         if (prevEventDown) {
-//            procs.add(paths.size()-1);
             clickChildButton(x, y);
             firstClick = !firstClick;
             prevEventDown = false;
         }
-        /*Path tempPath = new Path();
-        tempPath.moveTo(x,y);
-        tempPath.lineTo(x,y+0.01f);
-        paths.add(tempPath);*/
-//        path.moveTo(x, y);
         path.lineTo(x, y);
         animator.updatePath(path, false);
-        // If there aren't enough events to calculate angleSum
+        // If there aren't enough events to calculate angleSumAbsValue
         if (prevVector[0] == 0 && prevVector[1] == 0) {
             prevVector[0] = x - prevPoint[0];
             prevVector[1] = y - prevPoint[1];
@@ -354,26 +258,299 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         currVector[1] = y - prevPoint[1];
         float dot = currVector[0] * prevVector[0] + currVector[1] * prevVector[1];
         float det = currVector[0] * prevVector[1] - currVector[1] * prevVector[0];
-        angleSum += Math.abs(Math.atan2(det, dot));
-        if (!firstClick && Math.abs(angleSum) >= STRIKE_ANGLE) {
-//            procs.add(paths.size()-1);
-            clickChildButton(x, y);
-            firstClick = !firstClick;
-        } else if (firstClick && Math.abs(angleSum) >= (loopNum + 1) * LOOP_ANGLE) {
-//            procs.add(paths.size()-1);
-            clickChildButton(x, y);
-            loopNum++;
+        double angleLocal = atan2(det, dot);
+        if (isActivation(x,y,prevPoint[0],prevPoint[1],angleLocal, prevAngle)){
+            clickChildButton(x,y);
+            animator.addSpecial(x,y);
         }
         prevVector[0] = currVector[0];
         prevVector[1] = currVector[1];
         prevPoint[0] = x;
         prevPoint[1] = y;
+        prevAngle = angleLocal;
+    }
+
+    private double euclidDistance(float x, float y, float prevX, float prevY){
+        return sqrt((x-prevX)*(x-prevX)+(y-prevY)*(y-prevY));
+    }
+
+    private void resetActivation(){
+        resetFirstClick();
+        resetZigZag();
+        resetLoop();
+        secondClick = false;
+    }
+
+    private boolean isActivation(float x, float y, float prevX, float prevY, double angle, double prevAng){
+        boolean result = false;
+        if (!firstClick){
+            if(isFirstClick(x, y, prevX, prevY, angle, prevAng)){
+                firstClick = true;
+                result = true;
+            }
+        }
+
+        /*if (!secondClick){
+            if (isCusp(x, y, prevX, prevY, angle, prevAng)){
+                resetZigZag();
+                result = true;
+            }
+        }*/
+        /*if (isCusp(x, y, prevX, prevY, angle, prevAng)){
+            return true;
+        }*/
+
+        /*if (isFirstClick(x, y, prevX, prevY, angle, prevAng)){
+            firstClick = true;
+        }*/
+
+        /*if (isCusp(x,y,prevX, prevY, angle, prevAng)){
+            resetZigZag();
+        }*/
+
+        /*if (isLoop(x, y, prevX, prevY, angle, prevAng)){
+            return true;
+        }*/
+        if (isZigZag(x, y, prevX, prevY, angle, prevAng)){
+            result = true;
+        }
+        return result;
+    }
+
+    private boolean isCusp(float x, float y, float prevX, float prevY, double angle, double prevAng){
+        boolean result = false;
+
+        // Store angle of segment just previous to one over the threshold
+        // Once angle is reduced below threshold, check for a cusp
+        // Approach is total continuous angles above a threshold local angle
+        // (which ensures sharp angles) and once a local angle is below this
+        // threshold, then check the accumulated angle value against a cusp
+        // angle threshold. (Note that the angle must be in the same direction)
+
+        // Validate angles are in same direction
+        if ((angle > 0 && prevAng < 0) || (angle < 0 && prevAng > 0)){
+            // Reset
+            cuspAngleSum = 0;
+            cuspSegmentCount = 0;
+            return false;
+        }
+
+        // Check to see if a cusp was just completed
+        if (abs(cuspAngleSum + angle) > CUSP_THRESHOLD_ANGLE){
+            // Reset
+            cuspAngleSum = 0;
+            cuspSegmentCount = 0;
+            return true;
+        }
+
+        if (abs(angle) < CUSP_START_ANGLE){
+            // Not a cusp, but remember this angle for next time
+            cuspAngleSum = (float) angle;
+            cuspSegmentCount = 1;
+        } else {
+            cuspSegmentCount++;
+            // Check if are too many segments (this helps trigger the cusp earlier)
+            if (cuspSegmentCount > CUSP_MAX_SEGEMENT_COUNT){
+                // Not a cusp, reset
+                cuspAngleSum = 0;
+                cuspSegmentCount = 1;
+            }
+
+            // Angle is large, so add it to the local running total
+            cuspAngleSum += angle;
+        }
+        return  result;
+    }
+
+    // Called when crossing a button boundary
+    private void resetCusp(){
+        cuspAngleSum = 0;
+    }
+
+    // Called when crossing button boundaries
+    private void resetFirstClick(){
+        angleSumAbsValue = 0;
+        firstClick = false;
+        secondClick = false;
+    }
+
+    private boolean isFirstClick(float x, float y, float prevX, float prevY, double angle, double prevAng){
+        boolean result = false;
+        angleSumAbsValue += abs(angle);
+
+        if (angleSumAbsValue > STRIKE_ANGLE && !firstClick){
+            firstClick = true;
+            result = true;
+        }
+
+        return result;
+    }
+
+    private boolean isLoop(float x, float y, float prevX, float prevY, double angle, double prevAng){
+        boolean result = false;
+
+        if (abs(angle) > MAX_LOCAL_LOOP_ANGLE){
+            suspectAngle = angle;
+            clearanceDist = 0;
+        } else {
+            angleLoop += angle;
+        }
+
+        if (suspectAngle != 0){
+            clearanceDist += euclidDistance(x, y, prevX, prevY);
+        }
+
+        // Check if the trail is long enough
+        if (clearanceDist >= MIN_LOOP_LENGTH){
+            angleLoop += suspectAngle;
+            clearanceDist = 0;
+            suspectAngle = 0;
+        }
+
+        // Check for first loop
+        if (abs(angleLoop) > FIRST_LOOP_ANGLE && !firstLoop){
+            firstLoop = true;
+            angleLoop = 0;
+            return true;
+        }
+
+        // Check for additional loops
+        if (angleLoop >= ADDTL_LOOP_ANGLE){
+            angleLoop = 0;
+            return true;
+        }
+
+        return result;
+    }
+
+    // Called when crossing button boundaries
+    private void resetLoop(){
+        angleLoop = 0;
+        firstLoop = false;
+        clearanceDist = 0;
+        suspectAngle = 0;
+    }
+
+    // Called when crossing button boundaries OR
+    // when a full zig-zag is activated (both angles)
+    private void resetZigZag(){
+//        zzAngleSum = 0;
+//        zig = false;
+        zzInterDist = 0;
+//        zzStartAngleHappened = false;
+        zzBendCCW = false;
+        zzBendCW = false;
+        resetCWBend();
+        resetCCWBend();
+    }
+
+    private boolean isZigZag(float x, float y, float prevX, float prevY, double angle, double prevAng) {
+        boolean result = false;
+
+        // Update the bend functions only if needed
+        if (!zzBendCW){
+            zzBendCW = isCWBend(x, y, prevX, prevY, (float) angle, (float) prevAng);
+        }
+        if (!zzBendCCW){
+            zzBendCCW = isCCWBend(x, y, prevX, prevY, (float) angle, (float) prevAng);
+        }
+        // Check for ZZag
+        if (zzBendCW && zzBendCCW){
+            if (zzInterDist > ZZ_THRESHOLD_DIST){
+                result = true;
+            } else {
+                result = false;
+                resetZigZag();
+            }
+            resetZigZag();
+            return result;
+        }
+
+        // In between zig and zag
+        if (zzBendCW || zzBendCCW){
+            zzInterDist += euclidDistance(x, y, prevX, prevY);
+        }
+
+        return  result;
+
+    }
+
+    private void resetCWBend(){
+        cwAngleSum = 0;
+        bendCW = false;
+        cwHystSum = 0;
+    }
+
+    private boolean isCWBend(float x, float y, float prevX, float prevY, float angle, float prevAng){
+        boolean result = false;
+
+        if (bendCW){
+            return true;
+        }
+
+        // If angle not within tolerance
+        // For clarity, the evaluated expression below is broken up
+        // into its two parts: direction (angle > 0) and tolerance
+        // (angle > BEND_HYSTERESIS). This could be simplified to
+        // angle > BEND_HYSTERESIS because a CW angle is negative.
+        if (angle > 0){
+            if (angle > BEND_HYSTERESIS || cwHystSum + angle > BEND_MAX_HYSTERESIS_ANGLE) {
+                resetCWBend();
+            } else {
+                cwHystSum += angle;
+                cwAngleSum += angle;
+            }
+        } else {
+            if (Math.abs(cwAngleSum + angle) >= BEND_THRESHOLD){
+                result = true;
+                bendCW = true;
+                // Reset
+                resetCWBend();
+            } else {
+                cwAngleSum += angle;
+            }
+        }
+
+        return result;
+    }
+
+    private void resetCCWBend(){
+        ccwAngleSum = 0;
+        bendCCW = false;
+        ccwHystSum = 0;
+    }
+
+    private boolean isCCWBend(float x, float y, float prevX, float prevY, float angle, float prevAng){
+        boolean result = false;
+
+        if (bendCCW){
+            return true;
+        }
+
+        // If angle not within tolerance
+        if (angle < 0){
+            if (Math.abs(angle) > BEND_HYSTERESIS || Math.abs(ccwHystSum + angle) > BEND_MAX_HYSTERESIS_ANGLE) {
+                resetCCWBend();
+            } else {
+                ccwHystSum += angle;
+                ccwAngleSum += angle;
+            }
+        } else {
+            if ((ccwAngleSum + angle - ccwHystSum) >= BEND_THRESHOLD){
+                result = true;
+                bendCCW = true;
+                // Reset
+                resetCCWBend();
+            } else {
+                ccwAngleSum += angle;
+            }
+        }
+
+        return result;
     }
 
     private void resetOnButtonChange(float x , float y){
-        angleSum = 0;
-        loopNum = 0;
-        firstClick = false;
+        resetActivation();
         buttonBelowIndex[0] = getColIndexOfLocation(x);
         buttonBelowIndex[1] = getRowIndexOfLocation(y);
         prevPoint[0] = x;
@@ -384,7 +561,6 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
 
     private ButtonTextView getChildAt(float x, float y){
         ButtonTextView button = null;
-//        offsetViewBounds = new Rect();
         int count = getChildCount();
         for (int i =0; i < count; i++) {
             button = (ButtonTextView) getChildAt(i);
@@ -393,7 +569,6 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             if (offsetViewBounds.contains((int) x,(int) y)){
                 return button;
             }
-//                offsetViewBounds.setEmpty();
         }
         return button;
     }
@@ -425,94 +600,69 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         int action = ev.getAction();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-//                path = new Path();
                 path.moveTo(eventX, eventY);
                 // Move a negligible amount for PathMeasure functions to work
                 path.lineTo(eventX+0.01f, eventY+0.01f);
-                /*Path tempPath = new Path();
-                tempPath.moveTo(eventX, eventY);
-                tempPath.lineTo(eventX, eventY+0.01f);
-                paths.add(tempPath);*/
+                path3.moveTo(eventX, eventY);
+                path3.lineTo(eventX+1, eventY+1);
                 animator.updatePath(path, true);
-                downPoint[0] = eventX;
-                downPoint[1] = eventY;
+                animator.addSpecial(eventX, eventY);
                 resetOnDownAction(eventX, eventY);
                 break;
             case MotionEvent.ACTION_MOVE:
                 final int history = ev.getHistorySize();
                 for (int i = 0; i < history; i++){
+                    path3.lineTo(ev.getHistoricalX(i), ev.getHistoricalY(i));
                     processMoveAction(ev.getHistoricalX(i), ev.getHistoricalY(i));
                 }
                 processMoveAction(eventX, eventY);
                 break;
             case MotionEvent.ACTION_UP:
                 if (!firstClick) {
-//                    procs.add(paths.size()-1);
-                    notifyButtonListeners(getChildAt(eventX, eventY));
+                    animator.addSpecial(eventX, eventY);
+                    clickChildButton(eventX, eventY);
                 }
-                angleSum = 0;
-                firstClick = false;
-                loopNum = 0;
-                /*int count = paths.size();
-                PathMeasure measure = new PathMeasure();
-                float[] pos = new float[2];
-                float[] tan = new float[2];
-                for (int i = 0; i < count; i++) {
-                    measure.setPath(paths.get(i),false);
-                    measure.getPosTan(measure.getLength(), pos, tan);
-                    System.out.println("path #: " + i + "(" + pos[0] + ", " + pos[1] + ")");
-                }*/
-                /*int count = animator.circles.size();
-                PathAnimator.CircleHolder circle;
-                for (int i = 0; i < count; i++) {
-                    circle = animator.circles.get(i);
-                    System.out.println("circle #: " + i + "(" + circle.getX() + ", " + circle.getY() + ")");
+                resetActivation();
+                /*PathMeasure pathMeasure = new PathMeasure(path, false);
+                System.out.println("Contour is closed? " + pathMeasure.isClosed());
+                Region region = new Region();
+                RectF rectF = new RectF();
+                path.computeBounds(rectF, true);
+                Region clip = new Region((int) rectF.left, (int) rectF.top, (int) rectF.right,(int) rectF.bottom);
+                region.setPath(path, clip);
+                System.out.println("Region is complex: " + Boolean.toString(region.isComplex()));
+                Path path2 = new Path();
+                path2.moveTo(0,0);
+                path2.lineTo(10,10);
+                Region clip2 = new Region(0, 0, 10, 10);
+                region.setPath(path2, clip2);
+                System.out.println("Region2 is complex: " + Boolean.toString(region.isComplex()));
+                path3.computeBounds(rectF, true);
+                clip = new Region((int) rectF.left, (int) rectF.top, (int) rectF.right,(int) rectF.bottom);
+                region.setPath(path, clip);
+                System.out.println("Region is complex: " + Boolean.toString(region.isComplex()));
+                RegionIterator regionIterator = new RegionIterator(region);
+                Rect rect = new Rect();
+                while (regionIterator.next(rect)){
+                    System.out.println(rect.left + " "+ rect.top + " " + rect.right + " " + rect.bottom);
+                }
+                path3.rewind();
+
+                regionIterator = new RegionIterator(region);
+                rect = new Rect();
+                while (regionIterator.next(rect)){
+                    region.op(rect, region, Region.Op.UNION);
+                }
+
+                System.out.println("New Region rectangle");
+
+                rect = new Rect();
+                regionIterator = new RegionIterator(region);
+                while (regionIterator.next(rect)){
+                    System.out.println(rect.left + " "+ rect.top + " " + rect.right + " " + rect.bottom);
                 }*/
         }
         this.invalidate();
         return false;
     }
-
-    /*// old method for use with pre-first animation
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        final float eventX = ev.getX();
-        final float eventY = ev.getY();
-        // Event is on clear button
-        if (getChildAt(eventX - STROKE_WDITH/2, eventY - STROKE_WDITH/2).equals(clearButton)){
-            clearPath();
-            notifyButtonListeners(clearButton);
-            return false;
-        }
-
-        int action = ev.getAction();
-        switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                path = new Path();
-                path.moveTo(eventX, eventY);
-                path.lineTo(eventX, eventY);
-                paths.add(path);
-                downPoint[0] = eventX;
-                downPoint[1] = eventY;
-                resetOnDownAction(eventX, eventY);
-                break;
-            case MotionEvent.ACTION_MOVE:
-                final int history = ev.getHistorySize();
-                for (int i = 0; i < history; i++){
-                    processMoveAction(ev.getHistoricalX(i), ev.getHistoricalY(i));
-                }
-                processMoveAction(eventX, eventY);
-                break;
-            case MotionEvent.ACTION_UP:
-                if (!firstClick) {
-                    procs.add(paths.size()-1);
-                    notifyButtonListeners(getChildAt(eventX, eventY));
-                }
-                angleSum = 0;
-                firstClick = false;
-                loopNum = 0;
-        }
-        this.invalidate();
-        return false;
-    }*/
 }
