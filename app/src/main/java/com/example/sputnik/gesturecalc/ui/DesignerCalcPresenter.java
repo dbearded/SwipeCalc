@@ -85,6 +85,8 @@ public class DesignerCalcPresenter implements Observer {
                 expression.add(MathSymbol.fromString(symbol));
                 break;
         }
+
+        pathBar.setProgress(pathBar.getMax());
     }
 
     public void settingsChanged(){

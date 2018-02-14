@@ -14,8 +14,6 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.Math.*;
-
 /**
  * Created by Sputnik on 2/1/2018.
  */
@@ -27,8 +25,10 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     // Strike angle is 61/180*3.14 = 1.064f
     // Strike angle is 55/180*3.14 = 0.960
     private final float STRIKE_ANGLE = 1.24f;
-    // Loop angle is 260/180*3.14
-    private final float FIRST_LOOP_ANGLE = 4.54f;
+    // Loop angle is 260/180*3.14 = 4.54
+    // Loop first angle is 240/180*3.14 = 4.187
+    // Loop first angle is 220/180*3.14 =
+    private final float FIRST_LOOP_ANGLE = 3.84f;
     private final float ADDTL_LOOP_ANGLE = 6.28f;
     // Zig-zag angle is 100/180*3.14
     private final float ZIG_ZAG_ANGLE = 1.744f;
@@ -38,14 +38,12 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     private float MAX_LOCAL_LOOP_ANGLE = 1.047f;
     private boolean firstLoop;
     private double angleLoop;
-    private float clearanceDist;
     private double prevAngle;
-    private double suspectAngle;
     private float angleSumAbsValue;
     boolean firstClick = false;
-    boolean secondClick = false;
 
     private float cuspAngleSum;
+    private boolean possibleCusp;
     // Cusp start angle is 30/180*3.14
     // Cusp start angle is 60/180*3.14
     // Cusp start angle is 50/180*3.14
@@ -69,6 +67,8 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     private float BEND_MAX_HYSTERESIS_ANGLE = 0.174f;
     private float cwHystSum;
     private float ccwHystSum;
+
+    private boolean zzDominant, loopDominant;
 
     private List<ButtonListener> buttonListeners = new ArrayList<ButtonListener>();
     private ButtonTextView clearButton;
@@ -230,7 +230,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         float dx = x - prevPoint[0];
         float dy = y - prevPoint[1];
         // Ignore event if it's too close to previous
-        if (abs(dx) <= TOUCH_SLOP && abs(dy) <= TOUCH_SLOP) {
+        if (Math.abs(dx) <= TOUCH_SLOP && Math.abs(dy) <= TOUCH_SLOP) {
             return;
         }
         // If the event is over the clear button
@@ -258,7 +258,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         currVector[1] = y - prevPoint[1];
         float dot = currVector[0] * prevVector[0] + currVector[1] * prevVector[1];
         float det = currVector[0] * prevVector[1] - currVector[1] * prevVector[0];
-        double angleLocal = atan2(det, dot);
+        double angleLocal = Math.atan2(det, dot);
         if (isActivation(x,y,prevPoint[0],prevPoint[1],angleLocal, prevAngle)){
             clickChildButton(x,y);
             animator.addSpecial(x,y);
@@ -271,14 +271,15 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     }
 
     private double euclidDistance(float x, float y, float prevX, float prevY){
-        return sqrt((x-prevX)*(x-prevX)+(y-prevY)*(y-prevY));
+        return Math.sqrt((x-prevX)*(x-prevX)+(y-prevY)*(y-prevY));
     }
 
     private void resetActivation(){
         resetFirstClick();
         resetZigZag();
         resetLoop();
-        secondClick = false;
+        loopDominant = false;
+        zzDominant = false;
     }
 
     private boolean isActivation(float x, float y, float prevX, float prevY, double angle, double prevAng){
@@ -290,30 +291,17 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             }
         }
 
-        /*if (!secondClick){
-            if (isCusp(x, y, prevX, prevY, angle, prevAng)){
-                resetZigZag();
-                result = true;
-            }
-        }*/
-        /*if (isCusp(x, y, prevX, prevY, angle, prevAng)){
-            return true;
-        }*/
-
-        /*if (isFirstClick(x, y, prevX, prevY, angle, prevAng)){
-            firstClick = true;
-        }*/
-
-        /*if (isCusp(x,y,prevX, prevY, angle, prevAng)){
-            resetZigZag();
-        }*/
-
-        /*if (isLoop(x, y, prevX, prevY, angle, prevAng)){
-            return true;
-        }*/
-        if (isZigZag(x, y, prevX, prevY, angle, prevAng)){
+        if (isLoop(x, y, prevX, prevY, angle, prevAng) && !zzDominant){
             result = true;
+            loopDominant = true;
+            resetZigZag();
         }
+        if (isZigZag(x, y, prevX, prevY, angle, prevAng) && !loopDominant){
+            result = true;
+            zzDominant = true;
+            resetLoop();
+        }
+
         return result;
     }
 
@@ -330,30 +318,31 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         // Validate angles are in same direction
         if ((angle > 0 && prevAng < 0) || (angle < 0 && prevAng > 0)){
             // Reset
-            cuspAngleSum = 0;
-            cuspSegmentCount = 0;
+            resetCusp();
             return false;
         }
 
         // Check to see if a cusp was just completed
-        if (abs(cuspAngleSum + angle) > CUSP_THRESHOLD_ANGLE){
+        if (Math.abs(cuspAngleSum + angle) > CUSP_THRESHOLD_ANGLE){
             // Reset
-            cuspAngleSum = 0;
-            cuspSegmentCount = 0;
+            resetCusp();
             return true;
         }
 
-        if (abs(angle) < CUSP_START_ANGLE){
+        if (Math.abs(angle) < CUSP_START_ANGLE){
             // Not a cusp, but remember this angle for next time
             cuspAngleSum = (float) angle;
             cuspSegmentCount = 1;
+            possibleCusp = false;
         } else {
+            possibleCusp = true;
             cuspSegmentCount++;
             // Check if are too many segments (this helps trigger the cusp earlier)
             if (cuspSegmentCount > CUSP_MAX_SEGEMENT_COUNT){
                 // Not a cusp, reset
                 cuspAngleSum = 0;
                 cuspSegmentCount = 1;
+                possibleCusp = false;
             }
 
             // Angle is large, so add it to the local running total
@@ -365,18 +354,19 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     // Called when crossing a button boundary
     private void resetCusp(){
         cuspAngleSum = 0;
+        cuspSegmentCount = 0;
+        possibleCusp = false;
     }
 
     // Called when crossing button boundaries
     private void resetFirstClick(){
         angleSumAbsValue = 0;
         firstClick = false;
-        secondClick = false;
     }
 
     private boolean isFirstClick(float x, float y, float prevX, float prevY, double angle, double prevAng){
         boolean result = false;
-        angleSumAbsValue += abs(angle);
+        angleSumAbsValue += Math.abs(angle);
 
         if (angleSumAbsValue > STRIKE_ANGLE && !firstClick){
             firstClick = true;
@@ -389,33 +379,27 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     private boolean isLoop(float x, float y, float prevX, float prevY, double angle, double prevAng){
         boolean result = false;
 
-        if (abs(angle) > MAX_LOCAL_LOOP_ANGLE){
-            suspectAngle = angle;
-            clearanceDist = 0;
-        } else {
-            angleLoop += angle;
+        if (isCusp(x,y,prevX, prevY, angle, prevAng)){
+            angleLoop = 0;
+            return false;
         }
 
-        if (suspectAngle != 0){
-            clearanceDist += euclidDistance(x, y, prevX, prevY);
-        }
+        angleLoop += angle;
 
-        // Check if the trail is long enough
-        if (clearanceDist >= MIN_LOOP_LENGTH){
-            angleLoop += suspectAngle;
-            clearanceDist = 0;
-            suspectAngle = 0;
+        // Check for possible cusp first
+        if (possibleCusp){
+            return false;
         }
 
         // Check for first loop
-        if (abs(angleLoop) > FIRST_LOOP_ANGLE && !firstLoop){
+        if (Math.abs(angleLoop) > FIRST_LOOP_ANGLE && !firstLoop){
             firstLoop = true;
             angleLoop = 0;
             return true;
         }
 
         // Check for additional loops
-        if (angleLoop >= ADDTL_LOOP_ANGLE){
+        if (Math.abs(angleLoop) >= ADDTL_LOOP_ANGLE){
             angleLoop = 0;
             return true;
         }
@@ -427,17 +411,13 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     private void resetLoop(){
         angleLoop = 0;
         firstLoop = false;
-        clearanceDist = 0;
-        suspectAngle = 0;
+        resetCusp();
     }
 
     // Called when crossing button boundaries OR
     // when a full zig-zag is activated (both angles)
     private void resetZigZag(){
-//        zzAngleSum = 0;
-//        zig = false;
         zzInterDist = 0;
-//        zzStartAngleHappened = false;
         zzBendCCW = false;
         zzBendCW = false;
         resetCWBend();
