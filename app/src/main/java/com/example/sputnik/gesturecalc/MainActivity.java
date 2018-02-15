@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     BasicCalcPresenter presenter;
     Button designerButton;
     PathAnimator pathAnimator;
+    PathActivator pathActivator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,10 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
         presenter = new BasicCalcPresenter(this);
         pathAnimator = new PathAnimator();
-
-        ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-        int memoryClass = am.getMemoryClass();
-        Log.v("onCreate", "memoryClass:" + Integer.toString(memoryClass));
+        pathActivator = new PathActivator();
 
         layout = findViewById(R.id.gridLayout);
         ViewTreeObserver viewTreeObserver = layout.getViewTreeObserver();
@@ -59,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         layout.setPathAnimator(pathAnimator);
+        layout.setPathActivator(pathActivator);
 
         designerButton = findViewById(R.id.buttonAnimEditor);
         designerButton.setOnClickListener(new View.OnClickListener() {

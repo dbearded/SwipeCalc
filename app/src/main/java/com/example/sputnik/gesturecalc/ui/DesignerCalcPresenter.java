@@ -6,6 +6,7 @@ import android.widget.TextView;
 
 import com.example.sputnik.gesturecalc.DesignerActivity;
 import com.example.sputnik.gesturecalc.MyLayout;
+import com.example.sputnik.gesturecalc.PathActivator;
 import com.example.sputnik.gesturecalc.PathAnimator;
 import com.example.sputnik.gesturecalc.R;
 import com.example.sputnik.gesturecalc.data.Expression;
@@ -27,6 +28,7 @@ public class DesignerCalcPresenter implements Observer {
     private AppCompatEditText sizeEdit, spacingEdit, durationEdit, opacityEdit;
     private AppCompatSeekBar sizeBar, spacingBar, durationBar, opacityBar, pathBar;
     private PathAnimator animator;
+    private PathActivator activator;
 
     public DesignerCalcPresenter(DesignerActivity activity){
         this.activity = activity;
@@ -47,6 +49,9 @@ public class DesignerCalcPresenter implements Observer {
 
         animator = new PathAnimator();
         layout.setPathAnimator(animator);
+        activator = new PathActivator();
+        layout.setPathActivator(activator);
+
         float size = animator.getCircleStartDiameter();
         sizeEdit.setText(Float.toString(size));
         sizeBar.setProgress((int) size);
