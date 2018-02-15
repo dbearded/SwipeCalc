@@ -59,25 +59,25 @@ public class PathAnimator {
         addAnimators();
     }
 
-    // updates the current contour by replacing it with the parameter
-    void updatePath(Path newPath, boolean newContour) {
-        contourCount += newContour ? 1 : 0;
-        pathMeasure.setPath(newPath, false);
+    void update(float x, float y, boolean newContour) {
+        if (newContour) {
+            path.moveTo(x,y);
+            contourCount++;
+            addCircle(x,y);
+            distToNextTrace = circleCenterSpacing;
+            contourLength = 0;
+            addAnimators();
+        } else {
+            path.lineTo(x,y);
+        }
+
+        pathMeasure.setPath(path, false);
         for (int i = 0; i < contourCount; i++) {
             pathMeasure.nextContour();
         }
 
-        if (newContour){
-            pathMeasure.getPosTan(0f, pos, tan);
-            addCircle(pos[0], pos[1]);
-            // Add any additional points in contour
-            distToNextTrace = circleCenterSpacing;
-            contourLength = 0;
-            addAnimators();
-        }
-
         float segmentLength = pathMeasure.getLength() - contourLength;
-        if (segmentLength < distToNextTrace){
+        if (segmentLength < distToNextTrace) {
             return;
         }
         float tempDist = distToNextTrace;
@@ -92,12 +92,6 @@ public class PathAnimator {
         addAnimators();
         // update private fields since added a segment
         distToNextTrace = circleCenterSpacing - ((segmentLength - distToNextTrace) % circleCenterSpacing);
-        path.reset();
-        path.addPath(newPath);
-        pathMeasure.setPath(path, false);
-        for (int i = 0; i < contourCount; i++){
-            pathMeasure.nextContour();
-        }
         contourLength = pathMeasure.getLength();
     }
 
@@ -113,7 +107,7 @@ public class PathAnimator {
         drawingSubset = false;
         contourCount = 0;
         distToNextTrace = circleCenterSpacing;
-        path.reset();
+        path.rewind();
         pathMeasure.setPath(path, false);
     }
 
@@ -263,7 +257,7 @@ public class PathAnimator {
         return opacity;
     }
 
-    public long getANIMATION_DURATION(){
+    public long getAnimationDuration(){
         return animationDuration;
     }
 }

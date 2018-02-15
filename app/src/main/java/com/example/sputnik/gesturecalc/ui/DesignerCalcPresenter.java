@@ -58,7 +58,7 @@ public class DesignerCalcPresenter implements Observer {
         float distance = animator.getCircleCenterSpacing();
         spacingEdit.setText(Float.toString(distance));
         spacingBar.setProgress((int) distance);
-        long duration = animator.getANIMATION_DURATION();
+        long duration = animator.getAnimationDuration();
         durationEdit.setText(Long.toString(duration));
         durationBar.setProgress((int) duration);
         int opacity = animator.getOpacity();

@@ -2,7 +2,6 @@ package com.example.sputnik.gesturecalc;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -25,7 +24,6 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
 
     private List<ButtonListener> buttonListeners = new ArrayList<ButtonListener>();
     private ButtonTextView clearButton;
-    private Path path;
     private PathAnimator animator;
     private PathActivator activator;
     private Rect offsetViewBounds = new Rect();
@@ -38,8 +36,6 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     private int[] clearButtonBoundary = new int[4];
     boolean prevEventDown = false;
     boolean firstClick;
-
-//    Path path3 = new Path();
 
     interface ButtonListener {
         void buttonPressed(String input);
@@ -79,7 +75,6 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     }
 
     void setup(){
-        path = new Path();
         this.setWillNotDraw(false);
     }
 
@@ -110,11 +105,6 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
 
     int getRowIndexOfLocation(float y){
         return ((int) (y) / ((int) PX_PER_ROW));
-    }
-
-    void clearPath(){
-        path.reset();
-        animator.reset();
     }
 
     @Override
@@ -201,8 +191,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             firstClick = true;
             prevEventDown = false;
         }
-        path.lineTo(x, y);
-        animator.updatePath(path, false);
+        animator.update(x, y, false);
         activator.update(x, y);
         prevX = x;
         prevY = y;
@@ -249,7 +238,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             for (int i = 0; i < count; i++) {
                 ev.getHistoricalX(i);
             }
-            clearPath();
+            animator.reset();
             notifyButtonListeners(clearButton);
             this.invalidate();
             return false;
@@ -258,19 +247,13 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         int action = ev.getAction();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                path.moveTo(eventX, eventY);
-                // Move a negligible amount for PathMeasure functions to work
-                path.lineTo(eventX+0.01f, eventY+0.01f);
-                /*path3.moveTo(eventX, eventY);
-                path3.lineTo(eventX+1, eventY+1);*/
-                animator.updatePath(path, true);
+                animator.update(eventX, eventY, true);
                 animator.addSpecial(eventX, eventY);
                 resetOnDownAction(eventX, eventY);
                 break;
             case MotionEvent.ACTION_MOVE:
                 final int history = ev.getHistorySize();
                 for (int i = 0; i < history; i++){
-//                    path3.lineTo(ev.getHistoricalX(i), ev.getHistoricalY(i));
                     processMoveAction(ev.getHistoricalX(i), ev.getHistoricalY(i));
                 }
                 processMoveAction(eventX, eventY);
@@ -281,50 +264,6 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
                     clickChildButton(eventX, eventY);
                 }
                 activator.reset();
-            case MotionEvent.ACTION_CANCEL:
-                /*if (!firstClick) {
-                    animator.addSpecial(eventX, eventY);
-                    clickChildButton(eventX, eventY);
-                }
-                activator.reset();*/
-                /*PathMeasure pathMeasure = new PathMeasure(path, false);
-                System.out.println("Contour is closed? " + pathMeasure.isClosed());
-                Region region = new Region();
-                RectF rectF = new RectF();
-                path.computeBounds(rectF, true);
-                Region clip = new Region((int) rectF.left, (int) rectF.top, (int) rectF.right,(int) rectF.bottom);
-                region.setPath(path, clip);
-                System.out.println("Region is complex: " + Boolean.toString(region.isComplex()));
-                Path path2 = new Path();
-                path2.moveTo(0,0);
-                path2.lineTo(10,10);
-                Region clip2 = new Region(0, 0, 10, 10);
-                region.setPath(path2, clip2);
-                System.out.println("Region2 is complex: " + Boolean.toString(region.isComplex()));
-                path3.computeBounds(rectF, true);
-                clip = new Region((int) rectF.left, (int) rectF.top, (int) rectF.right,(int) rectF.bottom);
-                region.setPath(path, clip);
-                System.out.println("Region is complex: " + Boolean.toString(region.isComplex()));
-                RegionIterator regionIterator = new RegionIterator(region);
-                Rect rect = new Rect();
-                while (regionIterator.next(rect)){
-                    System.out.println(rect.left + " "+ rect.top + " " + rect.right + " " + rect.bottom);
-                }
-                path3.rewind();
-
-                regionIterator = new RegionIterator(region);
-                rect = new Rect();
-                while (regionIterator.next(rect)){
-                    region.op(rect, region, Region.Op.UNION);
-                }
-
-                System.out.println("New Region rectangle");
-
-                rect = new Rect();
-                regionIterator = new RegionIterator(region);
-                while (regionIterator.next(rect)){
-                    System.out.println(rect.left + " "+ rect.top + " " + rect.right + " " + rect.bottom);
-                }*/
         }
         this.invalidate();
         return false;
