@@ -26,7 +26,7 @@ public class PathAnimator {
     private static float circleStartDiameter = 16f;
     private static float circleEndDiameter = 0f;
     private static float circleCenterSpacing = 16f;
-    private static float strokeStartWidth = 32f;
+    private static float strokeStartWidth = 24f;
     private static float strokeEndWidth = 0f;
 
     private static int opacity = 164;
