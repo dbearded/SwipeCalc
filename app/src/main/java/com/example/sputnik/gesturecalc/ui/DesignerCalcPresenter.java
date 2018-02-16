@@ -1,7 +1,10 @@
 package com.example.sputnik.gesturecalc.ui;
 
+import android.os.Build;
 import android.support.v7.widget.AppCompatEditText;
 import android.support.v7.widget.AppCompatSeekBar;
+import android.support.v7.widget.SwitchCompat;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import com.example.sputnik.gesturecalc.DesignerActivity;
@@ -27,6 +30,7 @@ public class DesignerCalcPresenter implements Observer {
     private MyLayout layout;
     private AppCompatEditText sizeEdit, spacingEdit, durationEdit, opacityEdit;
     private AppCompatSeekBar sizeBar, spacingBar, durationBar, opacityBar, pathBar;
+    private SwitchCompat shapeSwitch;
     private PathAnimator animator;
     private PathActivator activator;
 
@@ -46,12 +50,25 @@ public class DesignerCalcPresenter implements Observer {
         durationBar = activity.findViewById(R.id.seekBarDuration);
         opacityBar = activity.findViewById(R.id.seekBarOpacity);
         pathBar = activity.findViewById(R.id.seekBarPath);
-
+        shapeSwitch = activity.findViewById(R.id.switchCircleLine);
         animator = new PathAnimator();
-        layout.setPathAnimator(animator);
-        activator = new PathActivator();
-        layout.setPathActivator(activator);
 
+        ViewTreeObserver viewTreeObserver = layout.getViewTreeObserver();
+        if (viewTreeObserver.isAlive()){
+            viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN){
+                        layout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                    } else {
+                        layout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                    animator.setSize(layout.getWidth(), layout.getHeight());
+                }
+            });
+        }
+
+        layout.setPathAnimator(animator);
         float size = animator.getCircleStartDiameter();
         sizeEdit.setText(Float.toString(size));
         sizeBar.setProgress((int) size);
@@ -65,6 +82,9 @@ public class DesignerCalcPresenter implements Observer {
         opacityEdit.setText(Integer.toString(opacity));
         opacityBar.setProgress(opacity);
         pathBar.setProgress(pathBar.getMax());
+
+        activator = new PathActivator();
+        layout.setPathActivator(activator);
     }
 
     // Updates model when a button is pressed
@@ -121,6 +141,7 @@ public class DesignerCalcPresenter implements Observer {
             animator.reDrawTo(progress);
             layout.invalidate();
         }
+        animator.setAnimationType(shapeSwitch.isChecked());
     }
 
     @Override

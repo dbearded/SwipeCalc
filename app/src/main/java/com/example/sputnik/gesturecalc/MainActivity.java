@@ -31,8 +31,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         presenter = new BasicCalcPresenter(this);
-        pathAnimator = new PathAnimator();
         pathActivator = new PathActivator();
+        pathAnimator = new PathAnimator();
 
         layout = findViewById(R.id.gridLayout);
         ViewTreeObserver viewTreeObserver = layout.getViewTreeObserver();
@@ -46,17 +46,18 @@ public class MainActivity extends AppCompatActivity {
                         layout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
                     layout.setupSize();
+                    pathAnimator.setSize(layout.getWidth(), layout.getHeight());
                 }
             });
         }
 
+        layout.setPathAnimator(pathAnimator);
         layout.registerButtonListener(new MyLayout.ButtonListener() {
             @Override
             public void buttonPressed(String input) {
                 presenter.buttonPressed(input);
             }
         });
-        layout.setPathAnimator(pathAnimator);
         layout.setPathActivator(pathActivator);
 
         designerButton = findViewById(R.id.buttonAnimEditor);
