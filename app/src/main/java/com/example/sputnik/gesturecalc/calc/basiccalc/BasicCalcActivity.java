@@ -9,20 +9,21 @@ import com.example.sputnik.gesturecalc.R;
 
 public class BasicCalcActivity extends AppCompatActivity{
 
-    private BasicCalcPresenter presenter;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.act_basic_calc);
 
-        BasicCalcFragment fragment = new BasicCalcFragment();
+        if (savedInstanceState == null) {
 
-        FragmentManager fragmentManager = getFragmentManager();
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.add(R.id.BasicCalcFragmentContainer, fragment).commit();
+            BasicCalcFragment fragment = new BasicCalcFragment();
 
-        presenter = new BasicCalcPresenter(fragment);
-        fragment.setPresenter(presenter);
+            FragmentManager fragmentManager = getFragmentManager();
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.add(R.id.BasicCalcFragmentContainer, fragment).commit();
+
+            BasicCalcPresenter presenter = new BasicCalcPresenter(fragment);
+            fragment.setPresenter(presenter);
+        }
     }
 }

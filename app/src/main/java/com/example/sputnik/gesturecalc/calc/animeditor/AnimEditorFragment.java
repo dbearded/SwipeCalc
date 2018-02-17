@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.SwitchCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -31,16 +32,9 @@ import com.example.sputnik.gesturecalc.util.PathActivator;
 
 public class AnimEditorFragment extends Fragment implements AnimEditorContract.View {
 
-    private AnimEditorContract.Presenter presenter;
-    private PathAnimator animator;
-    private PathActivator activator;
-    ButtonGrid buttonLayout;
-    SeekBar sizeBar, spacingBar, durationBar, opacityBar, pathBar;
-    EditText sizeEdit, spacingEdit, durationEdit, opacityEdit;
+    AnimEditorContract.Presenter presenter;
+    PathAnimator animator;
     TextView display, preview;
-    Switch shapeSwitch;
-    Spinner spinner;
-    SpinnerAdapter spinnerAdapter;
 
     abstract class MySeekBarChangeListener implements SeekBar.OnSeekBarChangeListener{
 
@@ -73,7 +67,11 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
 
         @Override
         public void afterTextChanged(Editable s) {
-            int val = Integer.valueOf(s.toString());
+            String str = s.toString();
+            if (str.isEmpty()){
+                return;
+            }
+            int val = Integer.valueOf(str);
             val = val < 0 ? 0 : val;
             val = val > seekBar.getMax() ? seekBar.getMax() : val;
             seekBar.setProgress(val);
@@ -88,13 +86,6 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
     public void onResume() {
         super.onResume();
         presenter.start();
-        buttonLayout.registerButtonListener(new ButtonGrid.ButtonListener() {
-            @Override
-            public void buttonPressed(String input) {
-                presenter.addNewValue(input);
-                pathBar.setProgress(pathBar.getMax());
-            }
-        });
     }
 
     @Nullable
@@ -102,43 +93,43 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.frag_anim_edit, container, false);
 
-        buttonLayout = root.findViewById(R.id.gridLayout);
-        activator = new PathActivator();
+        final ButtonGrid buttonGrid = root.findViewById(R.id.gridLayout);
+        PathActivator activator = new PathActivator();
         animator = FactoryAnimator.makeAnimator(FactoryAnimator.Type.Circle);
-        ViewTreeObserver viewTreeObserver = ((ViewGroup) buttonLayout).getViewTreeObserver();
+        ViewTreeObserver viewTreeObserver = ((ViewGroup) buttonGrid).getViewTreeObserver();
         if (viewTreeObserver.isAlive()){
             viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN){
-                        ((ViewGroup) buttonLayout).getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                        ((ViewGroup) buttonGrid).getViewTreeObserver().removeGlobalOnLayoutListener(this);
                     } else {
-                        ((ViewGroup) buttonLayout).getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        ((ViewGroup) buttonGrid).getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
-                    buttonLayout.setupSize();
-                    animator.setCanvasSize(((ViewGroup) buttonLayout).getWidth(), ((ViewGroup) buttonLayout).getHeight());
+                    buttonGrid.setupSize();
+                    animator.setCanvasSize(((ViewGroup) buttonGrid).getWidth(), ((ViewGroup) buttonGrid).getHeight());
                 }
             });
         }
-        buttonLayout.setPathActivator(activator);
-        buttonLayout.setPathAnimator(animator);
+        buttonGrid.setPathActivator(activator);
+        buttonGrid.setPathAnimator(animator);
 
         display = root.findViewById(R.id.display);
         preview = root.findViewById(R.id.preview);
 
-        sizeBar = root.findViewById(R.id.seekBarSize);
-        spacingBar = root.findViewById(R.id.seekBarSpacing);
-        durationBar = root.findViewById(R.id.seekBarDuration);
-        opacityBar = root.findViewById(R.id.seekBarOpacity);
-        pathBar = root.findViewById(R.id.seekBarPath);
+        SeekBar sizeBar = root.findViewById(R.id.seekBarSize);
+        SeekBar spacingBar = root.findViewById(R.id.seekBarSpacing);
+        SeekBar durationBar = root.findViewById(R.id.seekBarDuration);
+        SeekBar opacityBar = root.findViewById(R.id.seekBarOpacity);
+        final SeekBar pathBar = root.findViewById(R.id.seekBarPath);
 
-        sizeEdit = root.findViewById(R.id.editNumberSize);
-        spacingEdit = root.findViewById(R.id.editNumberSpacing);
-        durationEdit = root.findViewById(R.id.editNumberDuration);
-        opacityEdit = root.findViewById(R.id.editNumberOpacity);
+        final EditText sizeEdit = root.findViewById(R.id.editNumberSize);
+        final EditText spacingEdit = root.findViewById(R.id.editNumberSpacing);
+        final EditText durationEdit = root.findViewById(R.id.editNumberDuration);
+        final EditText opacityEdit = root.findViewById(R.id.editNumberOpacity);
 
-        shapeSwitch = root.findViewById(R.id.switchCircleLine);
-        spinner = root.findViewById(R.id.spinnerSetting);
+        Switch shapeSwitch = root.findViewById(R.id.switchCircleLine);
+        Spinner spinner = root.findViewById(R.id.spinnerSetting);
 
 
         sizeBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
@@ -184,7 +175,7 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     animator.reDrawTo(progress);
-                    ((ViewGroup) buttonLayout).invalidate();
+                    ((ViewGroup) buttonGrid).invalidate();
                 }
             }
         });
@@ -203,11 +194,28 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
                 } else {
                     animator = FactoryAnimator.makeAnimator(FactoryAnimator.Type.Circle);
                 }
-                ((ViewGroup) buttonLayout).invalidate();
+                ((ViewGroup) buttonGrid).invalidate();
+            }
+        });
+
+        buttonGrid.registerButtonListener(new ButtonGrid.ButtonListener() {
+            @Override
+            public void buttonPressed(String input) {
+                presenter.addNewValue(input);
+                pathBar.setProgress(pathBar.getMax());
             }
         });
 
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        display = null;
+        preview = null;
+        animator = null;
+        presenter = null;
     }
 
     public void updateDisplay(String expression) {

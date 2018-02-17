@@ -242,6 +242,11 @@ public class ButtonGridBase extends GridLayout implements ButtonGrid {
     }
 
     @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return true;
+    }
+
+    @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final float eventX = ev.getX();
         final float eventY = ev.getY();

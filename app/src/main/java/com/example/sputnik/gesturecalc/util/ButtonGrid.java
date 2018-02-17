@@ -10,19 +10,19 @@ import com.example.sputnik.gesturecalc.anim.PathAnimator;
  */
 
 public interface ButtonGrid {
-    public interface ButtonListener {
+    interface ButtonListener {
         void buttonPressed(String input);
     }
 
-    public void setPathAnimator(PathAnimator animator);
+    void setPathAnimator(PathAnimator animator);
 
-    public void setPathActivator(final PathActivator activator);
+    void setPathActivator(final PathActivator activator);
 
-    public void setupSize();
+    void setupSize();
 
-    public void setResetButton(View clear);
+    void setResetButton(View clear);
 
-    public void registerButtonListener(ButtonListener listener);
+    void registerButtonListener(ButtonListener listener);
 
-    public void unregisterButtonListener(ButtonListener listener);
+    void unregisterButtonListener(ButtonListener listener);
 }

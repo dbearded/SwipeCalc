@@ -85,22 +85,6 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
     public void setupSize(){
         PX_PER_COL = (float) getWidth() / (float) getColumnCount();
         PX_PER_ROW = (float) getHeight() / (float) getRowCount();
-
-        final View clear = findViewById(R.id.clear);
-        ViewTreeObserver viewTreeObserver = clear.getViewTreeObserver();
-        if (viewTreeObserver.isAlive()) {
-            viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    if (Build.VERSION.SDK_INT < 16) {
-                        clear.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                    } else {
-                        clear.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                    setResetButton(clear);
-                }
-            });
-        }
     }
 
     int getColIndexOfLocation(float x){
@@ -258,6 +242,11 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
                 buttonListeners) {
             listener.buttonPressed(String.valueOf(button.getText()));
         }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return false;
     }
 
     @Override
