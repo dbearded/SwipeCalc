@@ -1,4 +1,4 @@
-package com.example.sputnik.gesturecalc;
+package com.example.sputnik.gesturecalc.util;
 
 import java.util.Observable;
 
@@ -67,7 +67,7 @@ public class PathActivator extends Observable {
     }
 
 
-    public void update(float x, float y){
+    public void addPoint(float x, float y){
         if (!firstUpdate){
             firstUpdate = true;
             firstClick = true;

@@ -1,4 +1,4 @@
-package com.example.sputnik.gesturecalc;
+package com.example.sputnik.gesturecalc.anim;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -21,7 +21,7 @@ import java.util.ArrayList;
  * Created by Sputnik on 2/7/2018.
  */
 
-public class PathAnimator {
+public class OrigAnimator {
 
     private static float circleStartDiameter = 16f;
     private static float circleEndDiameter = 0f;
@@ -51,7 +51,7 @@ public class PathAnimator {
     private Canvas animCanvas;
     private Bitmap animBitmap;
 
-    public PathAnimator(){
+    public OrigAnimator(){
         path = new Path();
         pathMeasure = new PathMeasure();
     }
@@ -65,7 +65,7 @@ public class PathAnimator {
         drawingSubset = true;
     }
 
-    public void setSize(int width, int height) {
+    public void setCanvasSize(int width, int height) {
         animBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         animCanvas = new Canvas(animBitmap);
     }
@@ -86,7 +86,7 @@ public class PathAnimator {
         }
     }
 
-    void addSpecial(float x, float y){
+    public void addSpecialPoint(float x, float y){
         createCircle(x,y);
         CircleHolder specialCircle = circles.get(circles.size() - 1);
         specialCircle.setColor(Color.RED);
@@ -94,7 +94,7 @@ public class PathAnimator {
         addAnimators();
     }
 
-    void update(float x, float y, boolean newContour) {
+    public void addPoint(float x, float y, boolean newContour) {
         if (newContour) {
             prevX = 0;
             prevY = 0;
@@ -130,7 +130,7 @@ public class PathAnimator {
         prevY = y;
     }
 
-    void setAnimType(boolean circle){
+    public void setAnimType(boolean circle){
         if (circleAnimType == circle){
             return;
         }
@@ -167,7 +167,7 @@ public class PathAnimator {
             contourLength += tempDist;
             tempDist = circleCenterSpacing;
         }
-        // update private fields since added a segment
+        // addPoint private fields since added a segment
         distToNextCircle = circleCenterSpacing - ((segmentLength - distToNextCircle) % circleCenterSpacing);
     }
 
@@ -183,7 +183,7 @@ public class PathAnimator {
         newAnimationCount++;
     }
 
-    void reset() {
+    public void reset() {
         resetCircles();
         resetLines();
         drawingSubset = false;
@@ -210,7 +210,7 @@ public class PathAnimator {
         animBitmap.eraseColor(Color.TRANSPARENT);
     }
 
-    boolean isRunning(){
+    public boolean isRunning(){
         return animationCount != 0;
     }
 
@@ -276,7 +276,7 @@ public class PathAnimator {
         animationCount++;
     }
 
-    void updateCanvas(Canvas canvas){
+    public void updateCanvas(Canvas canvas){
         if (circleAnimType){
             drawCircles(canvas);
         } else {
@@ -340,7 +340,7 @@ public class PathAnimator {
             circle.resize(diameter, diameter);
             this.shape = new ShapeDrawable(circle);
             shape.getPaint().setColor(Color.parseColor("#a46fa7be"));
-            shape.getPaint().setAlpha(PathAnimator.opacity);
+            shape.getPaint().setAlpha(OrigAnimator.opacity);
             this.x = x;
             this.y = y;
         }
@@ -394,9 +394,9 @@ public class PathAnimator {
             paint.setStrokeCap(Paint.Cap.ROUND);
             paint.setStyle(Paint.Style.STROKE);
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_ATOP));
-            paint.setStrokeWidth(PathAnimator.strokeStartWidth);
+            paint.setStrokeWidth(OrigAnimator.strokeStartWidth);
             paint.setColor(Color.parseColor("#a46fa7be"));
-            paint.setAlpha(PathAnimator.opacity);
+            paint.setAlpha(OrigAnimator.opacity);
         }
 
         void setAlpha(int alpha) {
@@ -445,7 +445,7 @@ public class PathAnimator {
     }
 
     public void setOpacity(int opacity){
-        PathAnimator.opacity = opacity;
+        OrigAnimator.opacity = opacity;
     }
 
     public void setAnimationDuration(int duration){

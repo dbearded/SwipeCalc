@@ -1,14 +1,19 @@
-package com.example.sputnik.gesturecalc;
+package com.example.sputnik.gesturecalc.util;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.os.Build;
+import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.GridLayout;
 import android.widget.TextView;
+
+import com.example.sputnik.gesturecalc.R;
+import com.example.sputnik.gesturecalc.anim.PathAnimator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,12 +23,12 @@ import java.util.Observer;
 /**
  * Created by Sputnik on 2/1/2018.
  */
-public class MyLayout extends android.support.v7.widget.GridLayout {
+public class ButtonGridBase extends GridLayout implements ButtonGrid {
     private final float TOUCH_SLOP = 16f;
     private final float STROKE_WIDTH = 18f;
 
-    private List<ButtonListener> buttonListeners = new ArrayList<ButtonListener>();
-    private ButtonTextView clearButton;
+    private List<ButtonGrid.ButtonListener> buttonListeners = new ArrayList<>();
+    private TextView clearButton;
     private PathAnimator animator;
     private PathActivator activator;
     private Rect offsetViewBounds = new Rect();
@@ -37,21 +42,17 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     boolean prevEventDown = false;
     boolean firstClick;
 
-    interface ButtonListener {
-        void buttonPressed(String input);
-    }
-
-    public MyLayout(Context context) {
+    public ButtonGridBase(Context context) {
         super(context);
         setup();
     }
 
-    public MyLayout(Context context, AttributeSet attrs) {
+    public ButtonGridBase(Context context, AttributeSet attrs) {
         super(context, attrs);
         setup();
     }
 
-    public MyLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+    public ButtonGridBase(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         setup();
     }
@@ -69,7 +70,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
                     firstClick = true;
                 }
                 clickChildButton(((PathActivator) o).getCurX(),((PathActivator) o).getCurY());
-                animator.addSpecial(((PathActivator) o).getCurX(), ((PathActivator) o).getCurY());
+                animator.addSpecialPoint(((PathActivator) o).getCurX(), ((PathActivator) o).getCurY());
             }
         });
     }
@@ -78,25 +79,9 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         this.setWillNotDraw(false);
     }
 
-    void setupSize(){
+    public void setupSize() {
         PX_PER_COL = (float) getWidth() / (float) getColumnCount();
         PX_PER_ROW = (float) getHeight() / (float) getRowCount();
-
-        final View clear = findViewById(R.id.clear);
-        ViewTreeObserver viewTreeObserver = clear.getViewTreeObserver();
-        if (viewTreeObserver.isAlive()) {
-            viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    if (Build.VERSION.SDK_INT < 16) {
-                        clear.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                    } else {
-                        clear.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                    setResetButton(clear);
-                }
-            });
-        }
     }
 
     int getColIndexOfLocation(float x){
@@ -119,13 +104,42 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
     }
 
     @Override
+    public void onViewAdded(final View child) {
+        if (child.getId() == R.id.clear){
+            ViewTreeObserver viewTreeObserver = child.getViewTreeObserver();
+            if (viewTreeObserver.isAlive()) {
+                viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        if (Build.VERSION.SDK_INT < 16) {
+                            child.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                        } else {
+                            child.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        }
+                        setResetButton(child);
+                    }
+                });
+            }
+        }
+        child.setClickable(true);
+        child.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+                vibrator.vibrate(10);
+            }
+        });
+        super.onViewAdded(child);
+    }
+
+    @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
     }
 
     public void setResetButton(View clear){
         if (!isInEditMode()) {
-            this.clearButton = (ButtonTextView) clear;
+            this.clearButton = (TextView) clear;
             int[] layoutPos = new int[2];
             getLocationInWindow(layoutPos);
             int[] clearPos = new int[2];
@@ -155,7 +169,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             offsetDescendantRectToMyCoords(child, offsetViewBounds);
             if (offsetViewBounds.contains((int) x,(int) y)){
                 child.callOnClick();
-                for (ButtonListener listener :
+                for (ButtonGrid.ButtonListener listener :
                         buttonListeners) {
                     listener.buttonPressed(String.valueOf(child.getText()));
                 }
@@ -165,11 +179,11 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         }
     }
 
-    void registerButtonListener(ButtonListener listener){
+    public void registerButtonListener(ButtonGrid.ButtonListener listener){
         buttonListeners.add(listener);
     }
 
-    void unregisterButtonListener(ButtonListener listener){
+    public void unregisterButtonListener(ButtonGrid.ButtonListener listener){
         buttonListeners.remove(listener);
     }
 
@@ -191,8 +205,8 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
             firstClick = true;
             prevEventDown = false;
         }
-        animator.update(x, y, false);
-        activator.update(x, y);
+        animator.addPoint(x, y, false);
+        activator.addPoint(x, y);
         prevX = x;
         prevY = y;
     }
@@ -206,11 +220,11 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         prevY = y;
     }
 
-    private ButtonTextView getChildAt(float x, float y){
-        ButtonTextView button = null;
+    private TextView getChildAt(float x, float y){
+        TextView button = null;
         int count = getChildCount();
         for (int i =0; i < count; i++) {
-            button = (ButtonTextView) getChildAt(i);
+            button = (TextView) getChildAt(i);
             button.getDrawingRect(offsetViewBounds);
             offsetDescendantRectToMyCoords(button, offsetViewBounds);
             if (offsetViewBounds.contains((int) x,(int) y)){
@@ -220,8 +234,8 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         return button;
     }
 
-    private void notifyButtonListeners(ButtonTextView button){
-        for (ButtonListener listener :
+    private void notifyButtonListeners(TextView button){
+        for (ButtonGrid.ButtonListener listener :
                 buttonListeners) {
             listener.buttonPressed(String.valueOf(button.getText()));
         }
@@ -247,8 +261,8 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
         int action = ev.getAction();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                animator.update(eventX, eventY, true);
-                animator.addSpecial(eventX, eventY);
+                animator.addPoint(eventX, eventY, true);
+                animator.addSpecialPoint(eventX, eventY);
                 resetOnDownAction(eventX, eventY);
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -260,7 +274,7 @@ public class MyLayout extends android.support.v7.widget.GridLayout {
                 break;
             case MotionEvent.ACTION_UP:
                 if (!firstClick) {
-                    animator.addSpecial(eventX, eventY);
+                    animator.addSpecialPoint(eventX, eventY);
                     clickChildButton(eventX, eventY);
                 }
                 activator.reset();
