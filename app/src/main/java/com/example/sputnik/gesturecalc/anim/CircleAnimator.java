@@ -42,6 +42,7 @@ public class CircleAnimator implements PathAnimator{
     private int animationCount;
     private boolean drawingSubset = false;
     private float prevX, prevY;
+    private int canvasWidth, canvasHeight;
 
     public CircleAnimator(){
         path = new Path();
@@ -54,6 +55,8 @@ public class CircleAnimator implements PathAnimator{
     }
 
     public void setCanvasSize(int width, int height) {
+        canvasWidth = width;
+        canvasHeight = height;
     }
 
     private void reDrawCirclesTo(int progress) {
@@ -197,6 +200,16 @@ public class CircleAnimator implements PathAnimator{
     @Override
     public void recycle() {
 
+    }
+
+    @Override
+    public int getCanvasWidth() {
+        return canvasWidth;
+    }
+
+    @Override
+    public int getCanvasHeight() {
+        return canvasHeight;
     }
 
     private void drawCircles(Canvas canvas){

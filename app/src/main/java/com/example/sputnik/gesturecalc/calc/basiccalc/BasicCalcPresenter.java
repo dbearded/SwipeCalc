@@ -19,6 +19,7 @@ class BasicCalcPresenter implements Observer, BasicCalcContract.Presenter {
 
     public BasicCalcPresenter(BasicCalcContract.View view){
         this.view = view;
+        view.setPresenter(this);
     }
 
     @Override
@@ -53,6 +54,24 @@ class BasicCalcPresenter implements Observer, BasicCalcContract.Presenter {
         expression.clear();
         view.updateDisplay("");
         view.updatePreview("");
+    }
+
+    @Override
+    public void setExpression(String expr) {
+        if (expression == null) {
+            start();
+        } else {
+            clear();
+        }
+        if (expr == null){
+            expression.add(MathSymbol.ZERO);
+        }
+        char[] chars = expr.toCharArray();
+        for (char c :
+                chars) {
+            addNewValue(String.valueOf(c));
+        }
+
     }
 
     @Override

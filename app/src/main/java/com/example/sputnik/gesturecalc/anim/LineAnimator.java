@@ -222,6 +222,16 @@ public class LineAnimator implements PathAnimator{
 
     }
 
+    @Override
+    public int getCanvasWidth() {
+        return animBitmap.getWidth();
+    }
+
+    @Override
+    public int getCanvasHeight() {
+        return animBitmap.getHeight();
+    }
+
     private void drawLines(Canvas canvas) {
         animBitmap.eraseColor(Color.TRANSPARENT);
         ArrayList<LineHolder> tempLines;

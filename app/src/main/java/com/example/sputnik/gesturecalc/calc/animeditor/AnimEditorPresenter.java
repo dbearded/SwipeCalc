@@ -27,6 +27,7 @@ class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
 
     public AnimEditorPresenter(AnimEditorContract.View view) {
         this.view = view;
+        view.setPresenter(this);
     }
 
     @Override

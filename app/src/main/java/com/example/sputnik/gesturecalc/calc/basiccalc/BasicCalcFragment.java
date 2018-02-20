@@ -33,72 +33,52 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
         this.presenter = presenter;
     }
 
-    public void onResume() {
-        super.onResume();
-//        presenter.start();
-    }
-
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.frag_basic_calc, container, false);
 
-//        if (savedInstanceState == null) {
-            final ButtonGrid buttonGrid = root.findViewById(R.id.gridLayout);
-            display = root.findViewById(R.id.display);
-            preview = root.findViewById(R.id.preview);
-            Button designEditor = root.findViewById(R.id.buttonAnimEditor);
+        final ButtonGrid buttonGrid = root.findViewById(R.id.gridLayout);
+        display = root.findViewById(R.id.display);
+        preview = root.findViewById(R.id.preview);
+        Button designEditor = root.findViewById(R.id.buttonAnimEditor);
 
-            final PathAnimator animator = FactoryAnimator.makeAnimator(FactoryAnimator.Type.Circle);
-            PathActivator activator = new PathActivator();
+        final PathAnimator animator = FactoryAnimator.makeAnimator(FactoryAnimator.Type.Circle);
+        PathActivator activator = new PathActivator();
 
-            final ViewTreeObserver viewTreeObserver = ((ViewGroup) buttonGrid).getViewTreeObserver();
-            viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                        ((ViewGroup) buttonGrid).getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                    } else {
-                        ((ViewGroup) buttonGrid).getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                    buttonGrid.setupSize();
-                    animator.setCanvasSize(((ViewGroup) buttonGrid).getWidth(), ((ViewGroup) buttonGrid).getHeight());
+        final ViewTreeObserver viewTreeObserver = ((ViewGroup) buttonGrid).getViewTreeObserver();
+        viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                    ((ViewGroup) buttonGrid).getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                } else {
+                    ((ViewGroup) buttonGrid).getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
-            });
-            buttonGrid.setPathActivator(activator);
-            buttonGrid.setPathAnimator(animator);
+                buttonGrid.setupSize();
+                animator.setCanvasSize(((ViewGroup) buttonGrid).getWidth(), ((ViewGroup) buttonGrid).getHeight());
+            }
+        });
+        buttonGrid.setPathActivator(activator);
+        buttonGrid.setPathAnimator(animator);
 
-            presenter.start();
-            buttonGrid.registerButtonListener(new ButtonGrid.ButtonListener() {
-                @Override
-                public void buttonPressed(String input) {
-                    presenter.addNewValue(input);
-                }
-            });
+        presenter.start();
+        buttonGrid.registerButtonListener(new ButtonGrid.ButtonListener() {
+            @Override
+            public void buttonPressed(String input) {
+                presenter.addNewValue(input);
+            }
+        });
 
-            designEditor.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(getActivity(), AnimEditorActivity.class);
-                    startActivity(intent);
-                }
-            });
-//        }
+        designEditor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), AnimEditorActivity.class);
+                startActivity(intent);
+            }
+        });
 
         return root;
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        presenter = null;
-        display = null;
-        preview = null;
     }
 
     @Override

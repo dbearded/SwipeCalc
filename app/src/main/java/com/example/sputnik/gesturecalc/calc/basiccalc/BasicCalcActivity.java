@@ -9,21 +9,56 @@ import com.example.sputnik.gesturecalc.R;
 
 public class BasicCalcActivity extends AppCompatActivity{
 
+    private BasicCalcPresenter presenter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.act_basic_calc);
 
-        if (savedInstanceState == null) {
-
-            BasicCalcFragment fragment = new BasicCalcFragment();
+        BasicCalcFragment fragment = (BasicCalcFragment) getFragmentManager().findFragmentById(R.id.BasicCalcFragmentContainer);
+        if (fragment == null) {
+            fragment = new BasicCalcFragment();
 
             FragmentManager fragmentManager = getFragmentManager();
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             transaction.add(R.id.BasicCalcFragmentContainer, fragment).commit();
-
-            BasicCalcPresenter presenter = new BasicCalcPresenter(fragment);
-            fragment.setPresenter(presenter);
         }
+        presenter = new BasicCalcPresenter(fragment);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 }

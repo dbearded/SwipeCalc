@@ -40,6 +40,7 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
     private int[] clearButtonBoundary = new int[4];
     boolean prevEventDown = false;
     boolean firstClick;
+    boolean inFirstButton;
 
     public interface ButtonListener {
         void buttonPressed(String input);
@@ -160,6 +161,7 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
         buttonBelowIndex[0] = getColIndexOfLocation(x);
         buttonBelowIndex[1] = getRowIndexOfLocation(y);
         prevEventDown = true;
+        inFirstButton = true;
     }
 
     private void clickChildButton(float x, float y) {
@@ -172,10 +174,7 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
             offsetDescendantRectToMyCoords(child, offsetViewBounds);
             if (offsetViewBounds.contains((int) x,(int) y)){
                 child.callOnClick();
-                for (ButtonGrid.ButtonListener listener :
-                        buttonListeners) {
-                    listener.buttonPressed(String.valueOf(child.getText()));
-                }
+                notifyButtonListeners(child);
                 return;
             }
             offsetViewBounds.setEmpty();
@@ -221,6 +220,7 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
         buttonBelowIndex[1] = getRowIndexOfLocation(y);
         prevX = x;
         prevY = y;
+        inFirstButton = false;
     }
 
     private TextView getChildAt(float x, float y){
@@ -238,15 +238,16 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
     }
 
     private void notifyButtonListeners(TextView button){
+        String str = String.valueOf(button.getText());
         for (ButtonGrid.ButtonListener listener :
                 buttonListeners) {
-            listener.buttonPressed(String.valueOf(button.getText()));
+            listener.buttonPressed(str);
         }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return false;
+        return true;
     }
 
     @Override
@@ -281,10 +282,18 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
                 processMoveAction(eventX, eventY);
                 break;
             case MotionEvent.ACTION_UP:
+                if (prevEventDown){
+                    notifyButtonListeners(getChildAt(eventX, eventY));
+                } else if (!firstClick) {
+                    animator.addSpecialPoint(eventX, eventY);
+                    clickChildButton(eventX, eventY);
+                } /*else if (inFirstButton){
+                    return true;
+                }
                 if (!firstClick) {
                     animator.addSpecialPoint(eventX, eventY);
                     clickChildButton(eventX, eventY);
-                }
+                }*/
                 activator.reset();
         }
         this.invalidate();

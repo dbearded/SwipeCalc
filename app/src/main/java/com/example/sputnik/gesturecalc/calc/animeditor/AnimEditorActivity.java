@@ -17,20 +17,20 @@ import com.example.sputnik.gesturecalc.util.ButtonGridCompat;
 
 public class AnimEditorActivity extends AppCompatActivity {
 
+    AnimEditorPresenter presenter;
+
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.act_anim_editor);
 
-        if (savedInstanceState == null) {
+        AnimEditorFragment fragment = (AnimEditorFragment) getFragmentManager().findFragmentById(R.id.AnimEditorFragmentContainer);
 
-            AnimEditorFragment fragment = new AnimEditorFragment();
-
+        if (fragment == null) {
+            fragment = new AnimEditorFragment();
             FragmentManager fragmentManager = getFragmentManager();
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             transaction.add(R.id.AnimEditorFragmentContainer, fragment).commit();
-
-            AnimEditorPresenter presenter = new AnimEditorPresenter(fragment);
-            fragment.setPresenter(presenter);
         }
+        presenter = new AnimEditorPresenter(fragment);
     }
 }

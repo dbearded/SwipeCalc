@@ -17,5 +17,6 @@ interface BasicCalcContract {
     interface Presenter extends BasePresenter{
         void addNewValue(String str);
         void clear();
+        void setExpression(String expr);
     }
 }

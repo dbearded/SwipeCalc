@@ -7,45 +7,39 @@ import android.graphics.Canvas;
  */
 
 public interface PathAnimator {
-    public void setStartSize(float size);
+    void setStartSize(float size);
 
-    public void setEndSize(float size);
+    void setEndSize(float size);
 
-//    public void setCircleCenterSpacing(float spacing);
+    void setOpacity(int opacity);
 
-    public void setOpacity(int opacity);
+    void setAnimationDuration(int duration);
 
-    public void setAnimationDuration(int duration);
+    float getStartSize();
 
-//    public void setAnimationType(boolean type);
+    float getEndSize();
 
-    public float getStartSize();
+    int getOpacity();
 
-    public float getEndSize();
+    long getAnimationDuration();
 
-//    public float getCircleCenterSpacing();
+    void reDrawTo(int progress);
 
-    public int getOpacity();
+    void setCanvasSize(int width, int height);
 
-    public long getAnimationDuration();
+    void addSpecialPoint(float x, float y);
 
-//    public boolean getAnimationType();
+    void addPoint(float x, float y, boolean newContour);
 
-    public void reDrawTo(int progress);
+    void reset();
 
-    public void setCanvasSize(int width, int height);
+    boolean isRunning();
 
-    public void addSpecialPoint(float x, float y);
+    void updateCanvas(Canvas canvas);
 
-    public void addPoint(float x, float y, boolean newContour);
+    void recycle();
 
-//    public void setAnimType(boolean circle);
+    int getCanvasWidth();
 
-    public void reset();
-
-    public boolean isRunning();
-
-    public void updateCanvas(Canvas canvas);
-
-    public void recycle();
+    int getCanvasHeight();
 }
