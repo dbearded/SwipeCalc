@@ -158,7 +158,11 @@ public class LineAnimator implements PathAnimator{
         newAnimationCount++;
     }
 
-    public void reset() {
+    public void clear() {
+        reset();
+    }
+
+    private void reset() {
         resetLines();
         drawingSubset = false;
         prevX = 0;

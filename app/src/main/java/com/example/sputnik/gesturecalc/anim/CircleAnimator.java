@@ -47,23 +47,77 @@ public class CircleAnimator implements PathAnimator{
     private float prevX, prevY;
     private int canvasWidth, canvasHeight;
     private boolean invalidate;
+    private boolean newContourPrevAdded;
+
+    class CircleHolder {
+        private float x, y;
+        private ShapeDrawable shape;
+
+        CircleHolder(float diameter, float x, float y){
+            OvalShape circle = new OvalShape();
+            circle.resize(diameter, diameter);
+            this.shape = new ShapeDrawable(circle);
+            shape.getPaint().setColor(Color.parseColor("#a46fa7be"));
+            shape.getPaint().setAlpha(CircleAnimator.opacity);
+            this.x = x;
+            this.y = y;
+        }
+
+        float getX() {
+            return x;
+        }
+
+        void setX(float x) {
+            this.x = x - shape.getShape().getWidth() / 2;
+        }
+
+        float getY() {
+            return y;
+        }
+
+        void setY(float y) {
+            this.y = y - shape.getShape().getHeight() / 2;
+        }
+
+        ShapeDrawable getShape() {
+            return shape;
+        }
+
+        float getDiameter() {
+            return shape.getShape().getWidth();
+        }
+
+        void setDiameter(float diameter) {
+            shape.getShape().resize(diameter, diameter);
+        }
+
+        void setColor(int color){
+            shape.getPaint().setColor(color);
+        }
+
+        void setTransferMode(PorterDuffXfermode xfermode){
+            shape.getPaint().setXfermode(xfermode);
+        }
+    }
 
     public CircleAnimator(){
         path = new Path();
         pathMeasure = new PathMeasure();
-    }
-
-    public void reDrawTo(int progress) {
+    }    public void reDrawTo(int progress) {
         reDrawCirclesTo(progress);
         drawingSubset = true;
     }
 
-    @Override
+    public float getCircleCenterSpacing(){
+        return circleCenterSpacing;
+    }    @Override
     public void setNoDrawRects(Rect... rects) {
         noDrawRects = rects;
     }
 
-    private boolean inNoDrawRects(float x, float y){
+    public void setCircleCenterSpacing(float spacing){
+        circleCenterSpacing = spacing;
+    }    private boolean inNoDrawRects(float x, float y){
         boolean result = false;
         if (noDrawRects == null){
             return false;
@@ -77,7 +131,11 @@ public class CircleAnimator implements PathAnimator{
         return result;
     }
 
-    public void setCanvasSize(int width, int height) {
+    private void createSpecialCircle(float x, float y){
+        CircleHolder circle = new CircleHolder(circleStartDiameter, x - circleStartDiameter / 2, y - circleStartDiameter / 2);
+        circleSpecial.add(circle);
+        newAnimationCount++;
+    }    public void setCanvasSize(int width, int height) {
         canvasWidth = width;
         canvasHeight = height;
     }
@@ -103,28 +161,28 @@ public class CircleAnimator implements PathAnimator{
 
     private void addPoint(float x, float y, boolean newContour) {
         if (newContour) {
-            prevX = 0;
-            prevY = 0;
             path.moveTo(x,y);
-            contourCount++;
-            createCircle(x,y);
             distToNextCircle = circleCenterSpacing;
             contourLength = 0;
-            addAnimators();
+            newContourPrevAdded = true;
         } else {
             path.lineTo(x,y);
+            if (newContourPrevAdded) {
+                contourCount++;
+                newContourPrevAdded = false;
+            }
+            pathMeasure.setPath(path, false);
+            for (int i = 0; i < contourCount; i++) {
+                pathMeasure.nextContour();
+            }
+            addCircles();
+
+            addAnimators();
+            contourLength = pathMeasure.getLength();
+            prevX = x;
+            prevY = y;
         }
 
-        pathMeasure.setPath(path, false);
-        for (int i = 0; i < contourCount; i++) {
-            pathMeasure.nextContour();
-        }
-        addCircles();
-
-        addAnimators();
-        contourLength = pathMeasure.getLength();
-        prevX = x;
-        prevY = y;
     }
 
     @Override
@@ -190,26 +248,22 @@ public class CircleAnimator implements PathAnimator{
         newAnimationCount++;
     }
 
-    private void createSpecialCircle(float x, float y){
-        CircleHolder circle = new CircleHolder(circleStartDiameter, x - circleStartDiameter / 2, y - circleStartDiameter / 2);
-        circleSpecial.add(circle);
-        newAnimationCount++;
-    }
 
-    public void reset() {
-        resetCircles();
-        drawingSubset = false;
-        contourCount = 0;
+
+    public void clear(){
+        clearCircles();
         path.rewind();
+        path.moveTo(prevX, prevY);
         pathMeasure.setPath(path, false);
-        prevX = 0;
-        prevY = 0;
+        contourCount = 0;
+        drawingSubset = false;
+        distToNextCircle = circleCenterSpacing;
+        newContourPrevAdded = true;
     }
 
-    private void resetCircles(){
+    private void clearCircles(){
         circles.clear();
         circleSubset.clear();
-        distToNextCircle = circleCenterSpacing;
     }
 
     public boolean isRunning(){
@@ -286,57 +340,7 @@ public class CircleAnimator implements PathAnimator{
         }
     }
 
-    class CircleHolder {
-        private float x, y;
-        private ShapeDrawable shape;
 
-        CircleHolder(float diameter, float x, float y){
-            OvalShape circle = new OvalShape();
-            circle.resize(diameter, diameter);
-            this.shape = new ShapeDrawable(circle);
-            shape.getPaint().setColor(Color.parseColor("#a46fa7be"));
-            shape.getPaint().setAlpha(CircleAnimator.opacity);
-            this.x = x;
-            this.y = y;
-        }
-
-        float getX() {
-            return x;
-        }
-
-        float getY() {
-            return y;
-        }
-
-        ShapeDrawable getShape() {
-            return shape;
-        }
-
-        float getDiameter() {
-            return shape.getShape().getWidth();
-        }
-
-        void setDiameter(float diameter) {
-            shape.getShape().resize(diameter, diameter);
-        }
-
-
-        void setX(float x) {
-            this.x = x - shape.getShape().getWidth() / 2;
-        }
-
-        void setY(float y) {
-            this.y = y - shape.getShape().getHeight() / 2;
-        }
-
-        void setColor(int color){
-            shape.getPaint().setColor(color);
-        }
-
-        void setTransferMode(PorterDuffXfermode xfermode){
-            shape.getPaint().setXfermode(xfermode);
-        }
-    }
 
     public void setStartSize(float size){
         circleStartDiameter = size;
@@ -346,9 +350,7 @@ public class CircleAnimator implements PathAnimator{
         circleEndDiameter = size;
     }
 
-    public void setCircleCenterSpacing(float spacing){
-        circleCenterSpacing = spacing;
-    }
+
 
     public void setOpacity(int opacity){
         CircleAnimator.opacity = opacity;
@@ -367,9 +369,7 @@ public class CircleAnimator implements PathAnimator{
         return circleEndDiameter;
     }
 
-    public float getCircleCenterSpacing(){
-        return circleCenterSpacing;
-    }
+
 
     public int getOpacity(){
         return opacity;

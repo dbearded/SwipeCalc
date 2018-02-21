@@ -110,7 +110,7 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
             child.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    animator.reset();
+                    animator.clear();
                     Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
                     vibrator.vibrate(10);
                 }

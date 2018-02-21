@@ -35,7 +35,7 @@ public interface PathAnimator {
 
     void addEvent(MotionEvent event);
 
-    void reset();
+    void clear();
 
     boolean isRunning();
 
