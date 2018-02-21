@@ -16,6 +16,7 @@ import android.view.MotionEvent;
 import com.example.sputnik.gesturecalc.util.PathActivator;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * Created by Sputnik on 2/7/2018.
@@ -33,9 +34,9 @@ public class CircleAnimator implements PathAnimator{
 
     private Path path;
     private PathMeasure pathMeasure;
-    private ArrayList<CircleHolder> circles = new ArrayList<>();
-    private ArrayList<CircleHolder> circleSpecial = new ArrayList<>();
-    private ArrayList<CircleHolder> circleSubset = new ArrayList<>();
+    private LinkedList<CircleHolder> circles = new LinkedList<>();
+    private LinkedList<CircleHolder> circleSpecial = new LinkedList<>();
+    private LinkedList<CircleHolder> circleSubset = new LinkedList<>();
     private Rect[] noDrawRects;
     private int newAnimationCount = 0;
     private int contourCount = 0;
@@ -141,10 +142,10 @@ public class CircleAnimator implements PathAnimator{
     }
 
     private void reDrawCirclesTo(int progress) {
-        circleSubset = (ArrayList<CircleHolder>) circles.clone();
+        circleSubset = (LinkedList<CircleHolder>) circles.clone();
         int count = (int) (((float)(100 - progress))/((float) 100)* circleSubset.size());
         for (int i = 0; i < count-1; i++) {
-            circleSubset.remove(circleSubset.size()-1);
+            circleSubset.removeLast();
         }
     }
 
@@ -153,7 +154,7 @@ public class CircleAnimator implements PathAnimator{
             return;
         }
         createCircle(x,y);
-        CircleHolder specialCircle = circles.get(circles.size() - 1);
+        CircleHolder specialCircle = circles.getLast();
         specialCircle.setColor(Color.RED);
         specialCircle.setDiameter(circleStartDiameter);
         addAnimators();
@@ -324,7 +325,7 @@ public class CircleAnimator implements PathAnimator{
     }
 
     private void drawCircles(Canvas canvas){
-        ArrayList<CircleHolder> tempCircles;
+        LinkedList<CircleHolder> tempCircles;
         if (drawingSubset) {
             tempCircles = circleSubset;
             drawingSubset = false;

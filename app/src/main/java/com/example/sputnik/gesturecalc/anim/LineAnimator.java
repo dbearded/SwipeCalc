@@ -16,7 +16,9 @@ import android.view.MotionEvent;
 
 import com.example.sputnik.gesturecalc.util.PathActivator;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * Created by Sputnik on 2/7/2018.
@@ -34,8 +36,8 @@ public class LineAnimator implements PathAnimator{
 
     private float touchSlop = 16f;
 
-    private ArrayList<LineHolder> lines = new ArrayList<>();
-    private ArrayList<LineHolder> lineSubset = new ArrayList<>();
+    private LinkedList<LineHolder> lines = new LinkedList<>();
+    private LinkedList<LineHolder> lineSubset = new LinkedList<>();
     private Rect[] noDrawRects;
     private int newAnimationCount = 0;
     private int animationCount;
@@ -78,10 +80,10 @@ public class LineAnimator implements PathAnimator{
     }
 
     private void reDrawLineTo(int progress){
-        lineSubset = (ArrayList<LineHolder>) lines.clone();
+        lineSubset = (LinkedList<LineHolder>) lines.clone();
         int count = (int) (((float)(100 - progress))/((float) 100)* lineSubset.size());
         for (int i = 0; i < count - 1; i++) {
-            lineSubset.remove(lineSubset.size() -1);
+            lineSubset.removeLast();
         }
     }
 
@@ -243,7 +245,7 @@ public class LineAnimator implements PathAnimator{
 
     private void drawLines(Canvas canvas) {
         animBitmap.eraseColor(Color.TRANSPARENT);
-        ArrayList<LineHolder> tempLines;
+        LinkedList<LineHolder> tempLines;
         if (drawingSubset) {
             tempLines = lineSubset;
             drawingSubset = false;
