@@ -18,10 +18,6 @@ public interface ButtonGrid {
 
     void setPathActivator(final PathActivator activator);
 
-    void setupSize();
-
-    void setResetButton(View clear);
-
     void registerButtonListener(ButtonListener listener);
 
     void unregisterButtonListener(ButtonListener listener);

@@ -55,7 +55,6 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
                 } else {
                     ((ViewGroup) buttonGrid).getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
-                buttonGrid.setupSize();
                 animator.setCanvasSize(((ViewGroup) buttonGrid).getWidth(), ((ViewGroup) buttonGrid).getHeight());
             }
         });

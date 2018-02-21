@@ -2,18 +2,18 @@ package com.example.sputnik.gesturecalc.anim;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
-import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
+import android.view.MotionEvent;
+
+import com.example.sputnik.gesturecalc.util.PathActivator;
 
 import java.util.ArrayList;
 
@@ -29,20 +29,24 @@ public class CircleAnimator implements PathAnimator{
 
     private static int opacity = 164;
     private static long animationDuration = 0;
+    private float touchSlop = 16f;
 
     private Path path;
     private PathMeasure pathMeasure;
     private ArrayList<CircleHolder> circles = new ArrayList<>();
+    private ArrayList<CircleHolder> circleSpecial = new ArrayList<>();
     private ArrayList<CircleHolder> circleSubset = new ArrayList<>();
+    private Rect[] noDrawRects;
     private int newAnimationCount = 0;
     private int contourCount = 0;
     private float distToNextCircle;
     private float contourLength;
     private float[] circPos = new float[2];
     private int animationCount;
-    private boolean drawingSubset = false;
+    private boolean drawingSubset;
     private float prevX, prevY;
     private int canvasWidth, canvasHeight;
+    private boolean invalidate;
 
     public CircleAnimator(){
         path = new Path();
@@ -52,6 +56,25 @@ public class CircleAnimator implements PathAnimator{
     public void reDrawTo(int progress) {
         reDrawCirclesTo(progress);
         drawingSubset = true;
+    }
+
+    @Override
+    public void setNoDrawRects(Rect... rects) {
+        noDrawRects = rects;
+    }
+
+    private boolean inNoDrawRects(float x, float y){
+        boolean result = false;
+        if (noDrawRects == null){
+            return false;
+        }
+        for (Rect rect :
+                noDrawRects) {
+            if (rect.contains((int) x, (int) y)) {
+                return true;
+            }
+        }
+        return result;
     }
 
     public void setCanvasSize(int width, int height) {
@@ -68,18 +91,20 @@ public class CircleAnimator implements PathAnimator{
     }
 
     public void addSpecialPoint(float x, float y){
+        if (inNoDrawRects(x, y)){
+            return;
+        }
         createCircle(x,y);
         CircleHolder specialCircle = circles.get(circles.size() - 1);
         specialCircle.setColor(Color.RED);
-        specialCircle.setDiameter(18f);
+        specialCircle.setDiameter(circleStartDiameter);
         addAnimators();
     }
 
-    public void addPoint(float x, float y, boolean newContour) {
+    private void addPoint(float x, float y, boolean newContour) {
         if (newContour) {
             prevX = 0;
             prevY = 0;
-//            path.close();
             path.moveTo(x,y);
             contourCount++;
             createCircle(x,y);
@@ -100,6 +125,45 @@ public class CircleAnimator implements PathAnimator{
         contourLength = pathMeasure.getLength();
         prevX = x;
         prevY = y;
+    }
+
+    @Override
+    public void addEvent(MotionEvent event) {
+        float evX = event.getX();
+        float evY = event.getY();
+
+        int actionType = event.getAction();
+        switch (actionType) {
+            case MotionEvent.ACTION_DOWN:
+                if (inNoDrawRects(evX, evY)){
+                    invalidate = true;
+                    return;
+                }
+                addPoint(evX, evY, true);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (invalidate){
+                    return;
+                }
+                int count = event.getHistorySize();
+                for (int i = 0; i < count; i++) {
+                    float histX = event.getHistoricalX(i);
+                    float histY = event.getHistoricalY(i);
+                    if (PathActivator.euclidDistance(histX, histY, prevX, prevY) < touchSlop) {
+                        break;
+                    }
+                    addPoint(histX, histY, false);
+                }
+                if (PathActivator.euclidDistance(evX, evY, prevX, prevY) < touchSlop) {
+                    break;
+                }
+                addPoint(evX, evY, false);
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                invalidate = false;
+                break;
+        }
     }
 
     private void addCircles(){
@@ -123,6 +187,12 @@ public class CircleAnimator implements PathAnimator{
     private void createCircle(float x, float y) {
         CircleHolder circle = new CircleHolder(circleStartDiameter, x - circleStartDiameter / 2, y - circleStartDiameter / 2);
         circles.add(circle);
+        newAnimationCount++;
+    }
+
+    private void createSpecialCircle(float x, float y){
+        CircleHolder circle = new CircleHolder(circleStartDiameter, x - circleStartDiameter / 2, y - circleStartDiameter / 2);
+        circleSpecial.add(circle);
         newAnimationCount++;
     }
 
@@ -182,19 +252,6 @@ public class CircleAnimator implements PathAnimator{
 
     public void updateCanvas(Canvas canvas){
         drawCircles(canvas);
-            /*Path path = new Path(this.path);
-            path.close();
-            path.moveTo(0,0);
-            path.lineTo(0,0);
-            path.lineTo(750, 750);*/
-/*            Paint paint = new Paint();
-            paint.setDither(true);
-            paint.setColor(Color.RED);
-            paint.setStrokeWidth(16);
-//            paint.setStrokeJoin(Paint.Join.ROUND);
-            paint.setStrokeCap(Paint.Cap.ROUND);
-            paint.setStyle(Paint.Style.STROKE);
-            canvas.drawPath(tempPath, paint);*/
     }
 
     @Override
@@ -274,6 +331,10 @@ public class CircleAnimator implements PathAnimator{
 
         void setColor(int color){
             shape.getPaint().setColor(color);
+        }
+
+        void setTransferMode(PorterDuffXfermode xfermode){
+            shape.getPaint().setXfermode(xfermode);
         }
     }
 

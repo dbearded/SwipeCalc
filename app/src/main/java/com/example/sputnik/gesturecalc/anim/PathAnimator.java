@@ -1,6 +1,8 @@
 package com.example.sputnik.gesturecalc.anim;
 
 import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.view.MotionEvent;
 
 /**
  * Created by Sputnik on 2/16/2018.
@@ -25,11 +27,13 @@ public interface PathAnimator {
 
     void reDrawTo(int progress);
 
+    void setNoDrawRects(Rect... rects);
+
     void setCanvasSize(int width, int height);
 
     void addSpecialPoint(float x, float y);
 
-    void addPoint(float x, float y, boolean newContour);
+    void addEvent(MotionEvent event);
 
     void reset();
 

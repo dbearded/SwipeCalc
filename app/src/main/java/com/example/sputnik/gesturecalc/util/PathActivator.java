@@ -1,5 +1,9 @@
 package com.example.sputnik.gesturecalc.util;
 
+import android.graphics.PointF;
+import android.graphics.Rect;
+import android.view.MotionEvent;
+
 import java.util.Observable;
 
 /**
@@ -24,10 +28,11 @@ public class PathActivator extends Observable {
     private float MIN_LOOP_LENGTH;
     // Local loop angle is 60/180*3.14;
     private float MAX_LOCAL_LOOP_ANGLE = 1.047f;
+    private float touchSlop = 16f;
     private boolean firstLoop;
     private double angleLoop;
     private float angleSumAbsValue;
-    boolean firstClick = false;
+    boolean firstClick;
 
     private float cuspAngleSum;
     private boolean possibleCusp;
@@ -62,12 +67,121 @@ public class PathActivator extends Observable {
     private float[] prevVect = new float[2];
     private double curAngle, prevAngle;
     private boolean firstUpdate;
+    private int actionType;
+    private int prevActionType;
+    private boolean inFirstButton;
+    private Rect curRectView;
+    private ViewBoundaryListener viewBoundaryListener;
+    private PointF downPoint = new PointF();
+    private Rect[] noActivateRects;
+    private boolean invalidate;
 
-    public PathActivator(){
+    public interface ViewBoundaryListener{
+        // Returns new ViewBounds
+        Rect updateViewBounds(float x, float y);
     }
 
+    public PathActivator() {
+    }
 
-    public void addPoint(float x, float y){
+    // Only holds one at a time
+    public void registerViewBoundaryListener(ViewBoundaryListener viewBoundaryListener){
+        this.viewBoundaryListener = viewBoundaryListener;
+    }
+
+    public void setNoActivRects(Rect... rects) {
+        noActivateRects = rects;
+    }
+
+    private boolean inNoActivateRects(float x, float y){
+        boolean result = false;
+        if (noActivateRects == null){
+            return false;
+        }
+        for (Rect rect :
+                noActivateRects) {
+            if (rect.contains((int) x, (int) y)) {
+                return true;
+            }
+        }
+        return result;
+    }
+
+    public void unregisterViewBoundaryListener(ViewBoundaryListener viewBoundaryListener){
+        this.viewBoundaryListener = null;
+    }
+
+    // Get new view bounds from ViewBoundaryListener that contains the current point
+    private void getNewViewBounds(){
+        Rect temp = viewBoundaryListener.updateViewBounds(curX, curY);
+        curRectView = temp;
+        // new view bounds so restart activations
+        restart();
+    }
+
+    public float getTouchSlop() {
+        return touchSlop;
+    }
+
+    public void setTouchSlop(float touchSlop) {
+        this.touchSlop = touchSlop;
+    }
+
+    public void addEvent(MotionEvent event) {
+        float evX = event.getX();
+        float evY = event.getY();
+
+        actionType = event.getAction();
+        switch (actionType) {
+            case MotionEvent.ACTION_DOWN:
+                if (inNoActivateRects(evX, evY)){
+                    invalidate = true;
+                }
+                inFirstButton = true;
+                addPoint(evX, evY);
+                downPoint.set(evX, evY);
+                prevActionType = MotionEvent.ACTION_DOWN;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (invalidate){
+                    return;
+                }
+                int count = event.getHistorySize();
+                for (int i = 0; i < count; i++) {
+                    processActionMove(event.getHistoricalX(i), event.getHistoricalY(i));
+                }
+                processActionMove(evX, evY);
+                break;
+            case MotionEvent.ACTION_UP:
+                if (prevActionType == MotionEvent.ACTION_DOWN){
+                    activate();
+                } else if (!firstClick && !inFirstButton) {
+                    activate();
+                }
+                reset();
+                prevActionType = MotionEvent.ACTION_UP;
+                invalidate = false;
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                invalidate = false;
+                break;
+        }
+    }
+
+    private void processActionMove(float x, float y){
+        if (euclidDistance(x, y, curX, curY) < touchSlop) {
+            return;
+        }
+        addPoint(x, y);
+        if (prevActionType == MotionEvent.ACTION_DOWN){
+            activate(downPoint);
+            firstClick = true;
+            prevActionType = MotionEvent.ACTION_MOVE;
+        }
+    }
+
+    // Adds a point to the current contour
+    private void addPoint(float x, float y){
         if (!firstUpdate){
             firstUpdate = true;
             firstClick = true;
@@ -79,7 +193,7 @@ public class PathActivator extends Observable {
         }
         if (isActivation()){
             setChanged();
-            notifyObservers();
+            notifyObservers(new PointF(curX, curY));
         }
     }
 
@@ -99,6 +213,16 @@ public class PathActivator extends Observable {
         return Math.atan2(scalarCrossProduct(x1, y1, x2, y2), dotProduct(x1, y1, x2, y2));
     }
 
+    private void activate(){
+        setChanged();
+        notifyObservers(new PointF(curX, curY));
+    }
+
+    private void activate(PointF point){
+        setChanged();
+        notifyObservers(point);
+    }
+
     private void updateFields(float x, float y){
         prevX = curX;
         prevY = curY;
@@ -111,11 +235,13 @@ public class PathActivator extends Observable {
         }
         curVect[0] = curX - prevX;
         curVect[1] = curY - prevY;
-        /*if (prevVect[0] == 0 && prevVect[1] == 0){
-            return;
-        }*/
         prevAngle = curAngle;
         curAngle = angleBetweenVectors(curVect[0], curVect[1], prevVect[0], prevVect[1]);
+        if (viewBoundaryListener != null) {
+            if (curRectView == null || curRectView.isEmpty() || !curRectView.contains((int) curX, (int) curY)){
+                getNewViewBounds();
+            }
+        }
     }
 
     private void resetFields(){
@@ -130,6 +256,10 @@ public class PathActivator extends Observable {
         prevAngle = 0;
         curAngle = 0;
         firstUpdate = false;
+        inFirstButton = false;
+        if (curRectView != null) {
+            curRectView.setEmpty();
+        }
     }
 
     public float getCurX(){
@@ -164,7 +294,7 @@ public class PathActivator extends Observable {
     }
 
     // This should be called when starting a new gesture path
-    public void reset(){
+    private void reset(){
         restart();
         resetFields();
     }
@@ -172,13 +302,14 @@ public class PathActivator extends Observable {
     // This should be called when crossing a boundary
     // that requires the gesture trackers to start over
     // at the most previous point
-    public void restart(){
+    private void restart(){
         resetFirstClick();
         resetZigZag();
         resetLoop();
         loopDominant = false;
         zzDominant = false;
         firstClick = false;
+        inFirstButton = false;
     }
 
     private boolean isCusp(){

@@ -102,7 +102,6 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
                     } else {
                         ((ViewGroup) buttonGrid).getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
-                    buttonGrid.setupSize();
                     animator.setCanvasSize(((ViewGroup) buttonGrid).getWidth(), ((ViewGroup) buttonGrid).getHeight());
                 }
             });
