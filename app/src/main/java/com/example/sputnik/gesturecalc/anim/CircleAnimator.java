@@ -15,7 +15,6 @@ import android.view.MotionEvent;
 
 import com.example.sputnik.gesturecalc.util.PathActivator;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
@@ -40,8 +39,7 @@ public class CircleAnimator implements PathAnimator{
     private Rect[] noDrawRects;
     private int newAnimationCount = 0;
     private int contourCount = 0;
-    private float distToNextCircle;
-    private float contourLength;
+    private float discreteLength;
     private float[] circPos = new float[2];
     private int animationCount;
     private boolean drawingSubset;
@@ -111,14 +109,18 @@ public class CircleAnimator implements PathAnimator{
 
     public float getCircleCenterSpacing(){
         return circleCenterSpacing;
-    }    @Override
+    }
+
+    @Override
     public void setNoDrawRects(Rect... rects) {
         noDrawRects = rects;
     }
 
     public void setCircleCenterSpacing(float spacing){
         circleCenterSpacing = spacing;
-    }    private boolean inNoDrawRects(float x, float y){
+    }
+
+    private boolean inNoDrawRects(float x, float y){
         boolean result = false;
         if (noDrawRects == null){
             return false;
@@ -163,8 +165,9 @@ public class CircleAnimator implements PathAnimator{
     private void addPoint(float x, float y, boolean newContour) {
         if (newContour) {
             path.moveTo(x,y);
-            distToNextCircle = circleCenterSpacing;
-            contourLength = 0;
+            prevX = x;
+            prevY = y;
+            discreteLength = 0;
             newContourPrevAdded = true;
         } else {
             path.lineTo(x,y);
@@ -177,9 +180,8 @@ public class CircleAnimator implements PathAnimator{
                 pathMeasure.nextContour();
             }
             addCircles();
-
             addAnimators();
-            contourLength = pathMeasure.getLength();
+//            discreteLength = pathMeasure.getLength();
             prevX = x;
             prevY = y;
         }
@@ -209,7 +211,7 @@ public class CircleAnimator implements PathAnimator{
                     float histX = event.getHistoricalX(i);
                     float histY = event.getHistoricalY(i);
                     if (PathActivator.euclidDistance(histX, histY, prevX, prevY) < touchSlop) {
-                        break;
+                        continue;
                     }
                     addPoint(histX, histY, false);
                 }
@@ -226,21 +228,16 @@ public class CircleAnimator implements PathAnimator{
     }
 
     private void addCircles(){
-        float segmentLength = pathMeasure.getLength() - contourLength;
-        if (segmentLength < distToNextCircle) {
+        float segmentLength = pathMeasure.getLength() - discreteLength;
+        if (segmentLength < circleCenterSpacing) {
             return;
         }
-        float tempDist = distToNextCircle;
-        // 1 is added to account for the segment being longer than distToNextCircle
-        int circlesToAdd = 1 + (int) ((segmentLength - distToNextCircle) / circleCenterSpacing);
+        int circlesToAdd = (int) (segmentLength / circleCenterSpacing);
         for (int i = 0; i < circlesToAdd; i++) {
-            pathMeasure.getPosTan(contourLength + tempDist, circPos, null);
+            discreteLength += circleCenterSpacing;
+            pathMeasure.getPosTan(discreteLength, circPos, null);
             createCircle(circPos[0], circPos[1]);
-            contourLength += tempDist;
-            tempDist = circleCenterSpacing;
         }
-        // addPoint private fields since added a segment
-        distToNextCircle = circleCenterSpacing - ((segmentLength - distToNextCircle) % circleCenterSpacing);
     }
 
     private void createCircle(float x, float y) {
@@ -258,7 +255,6 @@ public class CircleAnimator implements PathAnimator{
         pathMeasure.setPath(path, false);
         contourCount = 0;
         drawingSubset = false;
-        distToNextCircle = circleCenterSpacing;
         newContourPrevAdded = true;
     }
 

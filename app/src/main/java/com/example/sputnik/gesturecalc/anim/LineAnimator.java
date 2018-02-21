@@ -127,7 +127,7 @@ public class LineAnimator implements PathAnimator{
                     float histX = event.getHistoricalX(i);
                     float histY = event.getHistoricalY(i);
                     if (PathActivator.euclidDistance(histX, histY, prevX, prevY) < touchSlop) {
-                        break;
+                        continue;
                     }
                     addPoint(histX, histY, false);
                 }

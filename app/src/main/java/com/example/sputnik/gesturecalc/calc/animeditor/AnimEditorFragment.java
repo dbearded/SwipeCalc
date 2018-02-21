@@ -43,11 +43,6 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
         public void onStartTrackingTouch(SeekBar seekBar) {
 
         }
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-
-        }
     }
     class MyTextWatcher implements TextWatcher {
         private SeekBar seekBar;
@@ -132,8 +127,14 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     sizeEdit.setText(Integer.toString(progress));
+                } else {
                     animator.setStartSize(progress);
                 }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                animator.setStartSize(seekBar.getProgress());
             }
         });
         spacingBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
@@ -141,9 +142,17 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     spacingEdit.setText(Integer.toString(progress));
+                } else {
                     if (animator instanceof CircleAnimator) {
                         ((CircleAnimator) animator).setCircleCenterSpacing(progress);
                     }
+                }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if (animator instanceof CircleAnimator) {
+                    ((CircleAnimator) animator).setCircleCenterSpacing(seekBar.getProgress());
                 }
             }
         });
@@ -152,8 +161,14 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     durationEdit.setText(Integer.toString(progress));
+                } else {
                     animator.setAnimationDuration(progress);
                 }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                animator.setAnimationDuration(seekBar.getProgress());
             }
         });
         opacityBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
@@ -161,8 +176,14 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     opacityEdit.setText(Integer.toString(progress));
+                } else {
                     animator.setOpacity(progress);
                 }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                animator.setOpacity(seekBar.getProgress());
             }
         });
         pathBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
@@ -172,6 +193,11 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
                     animator.reDrawTo(progress);
                     ((ViewGroup) buttonGrid).invalidate();
                 }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
 
@@ -206,8 +232,10 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
                    animator = FactoryAnimator.makeAnimator(FactoryAnimator.Type.Line);
                } else {
                    animator = FactoryAnimator.makeAnimator(FactoryAnimator.Type.Circle);
-                   spacingBar.setProgress((int) ((CircleAnimator) animator).getCircleCenterSpacing());
+//                   spacingBar.setProgress((int) ((CircleAnimator) animator).getCircleCenterSpacing());
+                   spacingEdit.setText(String.valueOf((int) ((CircleAnimator) animator).getCircleCenterSpacing()));
                }
+
                animator.setCanvasSize(width, height);
                buttonGrid.setPathAnimator(animator);
                ((ViewGroup) buttonGrid).invalidate();
