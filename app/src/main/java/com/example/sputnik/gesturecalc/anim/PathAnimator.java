@@ -27,7 +27,7 @@ public interface PathAnimator {
 
     void reDrawTo(int progress);
 
-    void setNoDrawRects(Rect... rects);
+    void addNoDrawRect(Rect rect);
 
     void setCanvasSize(int width, int height);
 

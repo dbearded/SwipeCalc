@@ -28,7 +28,7 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
     private List<ButtonGrid.ButtonListener> buttonListeners = new ArrayList<>();
     private PathAnimator animator;
     private PathActivator activator;
-    private Rect clearButtonBoundary = new Rect();
+    private Rect buttonBoundary = new Rect();
 
     public interface ButtonListener {
         void buttonPressed(String input);
@@ -89,7 +89,8 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
 
     @Override
     public void onViewAdded(final View child) {
-        if (child.getId() == R.id.clear){
+        int childId = child.getId();
+        if (childId == R.id.clear){
             ViewTreeObserver viewTreeObserver = child.getViewTreeObserver();
             if (viewTreeObserver.isAlive()) {
                 viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -100,10 +101,10 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
                         } else {
                             child.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                         }
-                        child.getDrawingRect(clearButtonBoundary);
-                        offsetDescendantRectToMyCoords(child, clearButtonBoundary);
-                        animator.setNoDrawRects(clearButtonBoundary);
-                        activator.setNoActivRects(clearButtonBoundary);
+                        child.getDrawingRect(buttonBoundary);
+                        offsetDescendantRectToMyCoords(child, buttonBoundary);
+                        animator.addNoDrawRect(buttonBoundary);
+                        activator.addNoActivateRect(buttonBoundary);
                     }
                 });
             }

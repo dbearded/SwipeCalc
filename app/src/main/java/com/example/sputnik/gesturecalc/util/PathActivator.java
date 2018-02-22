@@ -4,6 +4,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.view.MotionEvent;
 
+import java.util.ArrayList;
 import java.util.Observable;
 
 /**
@@ -73,7 +74,7 @@ public class PathActivator extends Observable {
     private Rect curRectView;
     private ViewBoundaryListener viewBoundaryListener;
     private PointF downPoint = new PointF();
-    private Rect[] noActivateRects;
+    private ArrayList<Rect> noActivateRects = new ArrayList<>();
     private boolean invalidate;
 
     public interface ViewBoundaryListener{
@@ -89,15 +90,12 @@ public class PathActivator extends Observable {
         this.viewBoundaryListener = viewBoundaryListener;
     }
 
-    public void setNoActivRects(Rect... rects) {
-        noActivateRects = rects;
+    public void addNoActivateRect(Rect rect) {
+        noActivateRects.add(rect);
     }
 
     private boolean inNoActivateRects(float x, float y){
         boolean result = false;
-        if (noActivateRects == null){
-            return false;
-        }
         for (Rect rect :
                 noActivateRects) {
             if (rect.contains((int) x, (int) y)) {

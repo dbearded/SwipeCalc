@@ -15,6 +15,7 @@ import android.view.MotionEvent;
 
 import com.example.sputnik.gesturecalc.util.PathActivator;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
@@ -36,7 +37,7 @@ public class CircleAnimator implements PathAnimator{
     private LinkedList<CircleHolder> circles = new LinkedList<>();
     private LinkedList<CircleHolder> circleSpecial = new LinkedList<>();
     private LinkedList<CircleHolder> circleSubset = new LinkedList<>();
-    private Rect[] noDrawRects;
+    private ArrayList<Rect> noDrawRects = new ArrayList<>();
     private int newAnimationCount = 0;
     private int contourCount = 0;
     private float discreteLength;
@@ -112,8 +113,8 @@ public class CircleAnimator implements PathAnimator{
     }
 
     @Override
-    public void setNoDrawRects(Rect... rects) {
-        noDrawRects = rects;
+    public void addNoDrawRect(Rect rect) {
+        noDrawRects.add(rect);
     }
 
     public void setCircleCenterSpacing(float spacing){
@@ -122,9 +123,6 @@ public class CircleAnimator implements PathAnimator{
 
     private boolean inNoDrawRects(float x, float y){
         boolean result = false;
-        if (noDrawRects == null){
-            return false;
-        }
         for (Rect rect :
                 noDrawRects) {
             if (rect.contains((int) x, (int) y)) {
@@ -256,6 +254,7 @@ public class CircleAnimator implements PathAnimator{
         contourCount = 0;
         drawingSubset = false;
         newContourPrevAdded = true;
+        discreteLength = 0;
     }
 
     private void clearCircles(){

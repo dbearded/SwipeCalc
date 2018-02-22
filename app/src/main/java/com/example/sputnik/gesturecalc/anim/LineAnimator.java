@@ -38,7 +38,7 @@ public class LineAnimator implements PathAnimator{
 
     private LinkedList<LineHolder> lines = new LinkedList<>();
     private LinkedList<LineHolder> lineSubset = new LinkedList<>();
-    private Rect[] noDrawRects;
+    private ArrayList<Rect> noDrawRects = new ArrayList<>();
     private int newAnimationCount = 0;
     private int animationCount;
     private boolean drawingSubset = false;
@@ -56,15 +56,12 @@ public class LineAnimator implements PathAnimator{
     }
 
     @Override
-    public void setNoDrawRects(Rect... rects) {
-        noDrawRects = rects;
+    public void addNoDrawRect(Rect rect) {
+        noDrawRects.add(rect);
     }
 
     private boolean inNoDrawRects(float x, float y){
         boolean result = false;
-        if (noDrawRects == null){
-            return false;
-        }
         for (Rect rect :
                 noDrawRects) {
             if (rect.contains((int) x, (int) y)) {
