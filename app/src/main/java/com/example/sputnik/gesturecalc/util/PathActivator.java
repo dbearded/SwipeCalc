@@ -137,6 +137,7 @@ public class PathActivator extends Observable {
                 }
                 inFirstButton = true;
                 addPoint(evX, evY);
+                activate();
                 downPoint.set(evX, evY);
                 prevActionType = MotionEvent.ACTION_DOWN;
                 break;
@@ -151,9 +152,7 @@ public class PathActivator extends Observable {
                 processActionMove(evX, evY);
                 break;
             case MotionEvent.ACTION_UP:
-                if (prevActionType == MotionEvent.ACTION_DOWN){
-                    activate();
-                } else if (!firstClick && !inFirstButton) {
+                if (!firstClick && !inFirstButton) {
                     activate();
                 }
                 reset();
@@ -172,8 +171,6 @@ public class PathActivator extends Observable {
         }
         addPoint(x, y);
         if (prevActionType == MotionEvent.ACTION_DOWN){
-            activate(downPoint);
-            firstClick = true;
             prevActionType = MotionEvent.ACTION_MOVE;
         }
     }
