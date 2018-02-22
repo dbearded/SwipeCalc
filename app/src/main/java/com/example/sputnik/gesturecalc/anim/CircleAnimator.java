@@ -15,9 +15,7 @@ import android.view.MotionEvent;
 
 import com.example.sputnik.gesturecalc.util.PathActivator;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.LinkedList;
 
 /**
@@ -26,12 +24,6 @@ import java.util.LinkedList;
 
 public class CircleAnimator implements PathAnimator{
 
-    private static float circleStartDiameter = 16f;
-    private static float circleEndDiameter = 0f;
-    private static float circleCenterSpacing = 16f;
-
-    private static int opacity = 164;
-    private static long animationDuration = 0;
     private float touchSlop = 16f;
 
     private Path path;
@@ -52,6 +44,7 @@ public class CircleAnimator implements PathAnimator{
     private boolean newContourPrevAdded;
     private CircleHolder drawCircle;
     private LinkedList<CircleHolder> drawCircles;
+    private Settings settings;
 
     class CircleHolder {
         private float x, y;
@@ -62,7 +55,7 @@ public class CircleAnimator implements PathAnimator{
             circle.resize(diameter, diameter);
             this.shape = new ShapeDrawable(circle);
             shape.getPaint().setColor(Color.parseColor("#a46fa7be"));
-            shape.getPaint().setAlpha(CircleAnimator.opacity);
+            shape.getPaint().setAlpha(settings.getOpacity());
             this.x = x;
             this.y = y;
         }
@@ -107,22 +100,17 @@ public class CircleAnimator implements PathAnimator{
     public CircleAnimator(){
         path = new Path();
         pathMeasure = new PathMeasure();
-    }    public void reDrawTo(int progress) {
-        reDrawCirclesTo(progress);
-        drawingSubset = true;
+        settings = new Settings();
     }
 
-    public float getCircleCenterSpacing(){
-        return circleCenterSpacing;
+    public void reDrawTo(int progress) {
+        reDrawCirclesTo(progress);
+        drawingSubset = true;
     }
 
     @Override
     public void addNoDrawRect(Rect rect) {
         noDrawRects.add(rect);
-    }
-
-    public void setCircleCenterSpacing(float spacing){
-        circleCenterSpacing = spacing;
     }
 
     private boolean inNoDrawRects(float x, float y){
@@ -156,7 +144,7 @@ public class CircleAnimator implements PathAnimator{
         createCircle(x,y);
         CircleHolder specialCircle = circles.getLast();
         specialCircle.setColor(Color.RED);
-        specialCircle.setDiameter(circleStartDiameter);
+        specialCircle.setDiameter(settings.getStartSize());
         addAnimators();
     }
 
@@ -179,7 +167,6 @@ public class CircleAnimator implements PathAnimator{
             }
             addCircles();
             addAnimators();
-//            discreteLength = pathMeasure.getLength();
             prevX = x;
             prevY = y;
         }
@@ -226,20 +213,22 @@ public class CircleAnimator implements PathAnimator{
     }
 
     private void addCircles(){
+        float spacing = settings.getSpacing();
         float segmentLength = pathMeasure.getLength() - discreteLength;
-        if (segmentLength < circleCenterSpacing) {
+        if (segmentLength < spacing) {
             return;
         }
-        int circlesToAdd = (int) (segmentLength / circleCenterSpacing);
+        int circlesToAdd = (int) (segmentLength / spacing);
         for (int i = 0; i < circlesToAdd; i++) {
-            discreteLength += circleCenterSpacing;
+            discreteLength += spacing;
             pathMeasure.getPosTan(discreteLength, circPos, null);
             createCircle(circPos[0], circPos[1]);
         }
     }
 
     private void createCircle(float x, float y) {
-        CircleHolder circle = new CircleHolder(circleStartDiameter, x - circleStartDiameter / 2, y - circleStartDiameter / 2);
+        float diameter = settings.getStartSize();
+        CircleHolder circle = new CircleHolder(diameter, x - diameter / 2, y - diameter / 2);
         circles.add(circle);
         newAnimationCount++;
     }
@@ -255,6 +244,11 @@ public class CircleAnimator implements PathAnimator{
         discreteLength = 0;
     }
 
+    @Override
+    public void applySettings(Settings settings) {
+        this.settings = settings;
+    }
+
     private void clearCircles(){
         circles.clear();
         circleSubset.clear();
@@ -267,7 +261,7 @@ public class CircleAnimator implements PathAnimator{
     // add animators to any new trace points
     private void addAnimators() {
         // Setting for disabling animations
-        if (animationDuration == 0){
+        if (settings.getAnimationDuration() == 0){
             newAnimationCount = 0;
             return;
         }
@@ -281,8 +275,8 @@ public class CircleAnimator implements PathAnimator{
 
     private void newCircleAnimation(){
         int size = circles.size();
-        ObjectAnimator animator = ObjectAnimator.ofFloat(circles.get(size - newAnimationCount), "diameter", circleEndDiameter);
-        animator.setDuration(animationDuration);
+        ObjectAnimator animator = ObjectAnimator.ofFloat(circles.get(size - newAnimationCount), "diameter", settings.getEndSize());
+        animator.setDuration(settings.getAnimationDuration());
         animator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -317,6 +311,11 @@ public class CircleAnimator implements PathAnimator{
         return canvasHeight;
     }
 
+    @Override
+    public Settings getSettings() {
+        return settings;
+    }
+
     private void drawCircles(Canvas canvas){
         if (drawingSubset) {
             drawCircles = circleSubset;
@@ -342,37 +341,4 @@ public class CircleAnimator implements PathAnimator{
             canvas.restore();
         }
     }
-
-    public void setStartSize(float size){
-        circleStartDiameter = size;
-    }
-
-    public void setEndSize(float size){
-        circleEndDiameter = size;
-    }
-
-    public void setOpacity(int opacity){
-        CircleAnimator.opacity = opacity;
-    }
-
-    public void setAnimationDuration(int duration){
-        animationDuration = duration;
-    }
-
-    public float getStartSize(){
-        return circleStartDiameter;
-    }
-
-    public float getEndSize(){
-        return circleEndDiameter;
-    }
-
-    public int getOpacity(){
-        return opacity;
-    }
-
-    public long getAnimationDuration(){
-        return animationDuration;
-    }
-
 }

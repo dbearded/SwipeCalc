@@ -26,12 +26,6 @@ import java.util.LinkedList;
 
 public class LineAnimator implements PathAnimator{
 
-    private static float strokeStartWidth = 18f;
-    private static float strokeEndWidth = 0f;
-
-    private static int opacity = 164;
-    private static long animationDuration = 0;
-
     private float touchSlop = 16f;
 
     private LinkedList<LineHolder> lines = new LinkedList<>();
@@ -44,8 +38,10 @@ public class LineAnimator implements PathAnimator{
     private Canvas animCanvas;
     private Bitmap animBitmap;
     private boolean invalidate;
+    private Settings settings;
 
     public LineAnimator(){
+        settings = new Settings();
     }
 
     public void reDrawTo(int progress) {
@@ -159,6 +155,11 @@ public class LineAnimator implements PathAnimator{
         reset();
     }
 
+    @Override
+    public void applySettings(Settings settings) {
+        this.settings = settings;
+    }
+
     private void reset() {
         resetLines();
         drawingSubset = false;
@@ -183,7 +184,7 @@ public class LineAnimator implements PathAnimator{
     // add animators to any new trace points
     private void addAnimators() {
         // Setting for disabling animations
-        if (animationDuration == 0){
+        if (settings.getAnimationDuration() == 0){
             newAnimationCount = 0;
             return;
         }
@@ -199,7 +200,7 @@ public class LineAnimator implements PathAnimator{
         int size = lines.size();
         AnimatorSet animatorSet = new AnimatorSet();
         LineHolder tempLine = lines.get(size - newAnimationCount);
-        ObjectAnimator widthAnim = ObjectAnimator.ofFloat(tempLine, "width", strokeEndWidth);
+        ObjectAnimator widthAnim = ObjectAnimator.ofFloat(tempLine, "width", settings.getEndSize());
         widthAnim.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -211,9 +212,9 @@ public class LineAnimator implements PathAnimator{
                 animationCount--;
             }
         });
-        widthAnim.setDuration(animationDuration);
+        widthAnim.setDuration(settings.getAnimationDuration());
         ObjectAnimator alphaAnim = ObjectAnimator.ofInt(tempLine, "alpha", 0);
-        alphaAnim.setDuration(animationDuration);
+        alphaAnim.setDuration(settings.getAnimationDuration());
         animatorSet.play(widthAnim).with(alphaAnim);
         animatorSet.start();
         animationCount++;
@@ -238,6 +239,11 @@ public class LineAnimator implements PathAnimator{
         return animBitmap.getHeight();
     }
 
+    @Override
+    public Settings getSettings() {
+        return settings;
+    }
+
     private void drawLines(Canvas canvas) {
         animBitmap.eraseColor(Color.TRANSPARENT);
         LinkedList<LineHolder> tempLines;
@@ -249,7 +255,6 @@ public class LineAnimator implements PathAnimator{
         }
         int size = tempLines.size();
         for (int i = 0; i < size; i++) {
-//            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_ATOP));
             animCanvas.drawPath(lines.get(i).getPath(), lines.get(i).getPaint());
         }
         canvas.drawBitmap(animBitmap, 0, 0, null);
@@ -270,9 +275,9 @@ public class LineAnimator implements PathAnimator{
             paint.setStrokeCap(Paint.Cap.ROUND);
             paint.setStyle(Paint.Style.STROKE);
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_ATOP));
-            paint.setStrokeWidth(LineAnimator.strokeStartWidth);
+            paint.setStrokeWidth(settings.getStartSize());
             paint.setColor(Color.parseColor("#a46fa7be"));
-            paint.setAlpha(LineAnimator.opacity);
+            paint.setAlpha(settings.getOpacity());
         }
 
         void setAlpha(int alpha) {
@@ -306,43 +311,6 @@ public class LineAnimator implements PathAnimator{
         void reset() {
             path.reset();
         }
-    }
-
-
-    @Override
-    public void setStartSize(float size) {
-        strokeStartWidth = size;
-    }
-
-    @Override
-    public void setEndSize(float size) {
-        strokeEndWidth = size;
-    }
-
-    public void setOpacity(int opacity){
-        LineAnimator.opacity = opacity;
-    }
-
-    public void setAnimationDuration(int duration){
-        animationDuration = duration;
-    }
-
-    @Override
-    public float getStartSize() {
-        return strokeStartWidth;
-    }
-
-    @Override
-    public float getEndSize() {
-        return strokeEndWidth;
-    }
-
-    public int getOpacity(){
-        return opacity;
-    }
-
-    public long getAnimationDuration(){
-        return animationDuration;
     }
 
     public float getTouchSlop(){

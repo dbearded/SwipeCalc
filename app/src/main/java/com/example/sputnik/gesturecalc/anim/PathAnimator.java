@@ -9,21 +9,6 @@ import android.view.MotionEvent;
  */
 
 public interface PathAnimator {
-    void setStartSize(float size);
-
-    void setEndSize(float size);
-
-    void setOpacity(int opacity);
-
-    void setAnimationDuration(int duration);
-
-    float getStartSize();
-
-    float getEndSize();
-
-    int getOpacity();
-
-    long getAnimationDuration();
 
     void reDrawTo(int progress);
 
@@ -37,6 +22,8 @@ public interface PathAnimator {
 
     void clear();
 
+    void applySettings(Settings settings);
+
     boolean isRunning();
 
     void updateCanvas(Canvas canvas);
@@ -46,4 +33,6 @@ public interface PathAnimator {
     int getCanvasWidth();
 
     int getCanvasHeight();
+
+    Settings getSettings();
 }
