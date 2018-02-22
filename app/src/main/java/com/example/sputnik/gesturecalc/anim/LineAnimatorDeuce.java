@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
@@ -16,7 +15,6 @@ import android.view.MotionEvent;
 
 import com.example.sputnik.gesturecalc.util.PathActivator;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -24,7 +22,7 @@ import java.util.LinkedList;
  * Created by Sputnik on 2/7/2018.
  */
 
-public class LineAnimator implements PathAnimator{
+public class LineAnimatorDeuce implements PathAnimator{
 
     private static float strokeStartWidth = 18f;
     private static float strokeEndWidth = 0f;
@@ -43,9 +41,13 @@ public class LineAnimator implements PathAnimator{
     private float prevX, prevY;
     private Canvas animCanvas;
     private Bitmap animBitmap;
-    private boolean invalidate;
+    private boolean dontDraw;
+    private float sX, sY, eX, eY;
+    private int prevEvent;
+    private LineHolder drawLine;
+    private LinkedList<LineHolder> drawLines;
 
-    public LineAnimator(){
+    public LineAnimatorDeuce(){
     }
 
     public void reDrawTo(int progress) {
@@ -85,16 +87,26 @@ public class LineAnimator implements PathAnimator{
     public void addSpecialPoint(float x, float y){
     }
 
+    private void resetPoints() {
+        sX = 0;
+        sY = 0;
+        eX = 0;
+        eY = 0;
+    }
+
     private void addPoint(float x, float y, boolean newContour) {
         if (newContour) {
-            prevX = 0;
-            prevY = 0;
-            addLine(x, y);
+            sX = x;
+            sY = y;
+        } else {
+            // Account for taps
+            eX = sX == x ? x + 0.1f : x;
+            eY = sY == y ? y + 0.1f : y;
+            addLine(sX, sY, eX, eY);
             addAnimators();
+            sX = x;
+            sY = y;
         }
-        addLine(x, y);
-        addAnimators();
-//        contourLength = pathMeasure.getLength();
         prevX = x;
         prevY = y;
     }
@@ -104,17 +116,17 @@ public class LineAnimator implements PathAnimator{
         float evX = event.getX();
         float evY = event.getY();
 
-        int actionType = event.getAction();
-        switch (actionType) {
+        int action = event.getAction();
+        switch (action) {
             case MotionEvent.ACTION_DOWN:
                 if (inNoDrawRects(evX, evY)){
-                    invalidate = true;
+                    dontDraw = true;
                     return;
                 }
                 addPoint(evX, evY, true);
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (invalidate){
+                if (dontDraw){
                     return;
                 }
                 int count = event.getHistorySize();
@@ -132,25 +144,18 @@ public class LineAnimator implements PathAnimator{
                 addPoint(evX, evY, false);
                 break;
             case MotionEvent.ACTION_UP:
+                if (prevEvent == MotionEvent.ACTION_DOWN && !dontDraw){
+                    addPoint(evX, evY, true);
+                }
             case MotionEvent.ACTION_CANCEL:
-                invalidate = false;
+                dontDraw = false;
                 break;
         }
+        prevEvent = action;
     }
 
-    private void addLine(float x, float y){
-        Path segment = new Path();
-        if (prevX == 0 && prevY == 0){
-            segment.moveTo(x, y);
-        } else {
-            segment.moveTo(prevX, prevY);
-        }
-        segment.lineTo(x, y);
-        createLine(segment);
-    }
-
-    private void createLine(Path segment) {
-        LineHolder line = new LineHolder(segment);
+    private void addLine(float sX, float sY, float eX, float eY){
+        LineHolder line = new LineHolder(sX, sY, eX, eY);
         lines.add(line);
         newAnimationCount++;
     }
@@ -164,13 +169,10 @@ public class LineAnimator implements PathAnimator{
         drawingSubset = false;
         prevX = 0;
         prevY = 0;
+        resetPoints();
     }
 
     private void resetLines(){
-        int count = lines.size();
-        for (int i = 0; i < count; i++) {
-            lines.get(i).reset();
-        }
         lines.clear();
         lineSubset.clear();
         animBitmap.eraseColor(Color.TRANSPARENT);
@@ -225,7 +227,6 @@ public class LineAnimator implements PathAnimator{
 
     @Override
     public void recycle() {
-
     }
 
     @Override
@@ -240,29 +241,36 @@ public class LineAnimator implements PathAnimator{
 
     private void drawLines(Canvas canvas) {
         animBitmap.eraseColor(Color.TRANSPARENT);
-        LinkedList<LineHolder> tempLines;
         if (drawingSubset) {
-            tempLines = lineSubset;
+            drawLines = lineSubset;
             drawingSubset = false;
         } else {
-            tempLines = lines;
+            drawLines = lines;
         }
-        int size = tempLines.size();
+        for (LineHolder line :
+                drawLines) {
+            animCanvas.drawLine(line.sX, line.sY, line.eX, line.eY, line.getPaint());
+//            canvas.drawLine(line.sX, line.sY, line.eX, line.eY, line.getPaint());
+        }
+
+        /*int size = tempLines.size();
         for (int i = 0; i < size; i++) {
-//            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_ATOP));
             animCanvas.drawPath(lines.get(i).getPath(), lines.get(i).getPaint());
-        }
+        }*/
         canvas.drawBitmap(animBitmap, 0, 0, null);
     }
 
     // Use a linear gradient along line for color change
     // animate the color
     class LineHolder {
-        private Path path;
+        float sX, sY, eX, eY;
         private Paint paint;
 
-        LineHolder(Path segment) {
-            path = segment;
+        LineHolder(float startX, float startY, float endX, float endY) {
+            sX = startX;
+            sY = startY;
+            eX = endX;
+            eY = endY;
             paint = new Paint();
             paint.setAntiAlias(true);
             paint.setDither(true);
@@ -270,9 +278,9 @@ public class LineAnimator implements PathAnimator{
             paint.setStrokeCap(Paint.Cap.ROUND);
             paint.setStyle(Paint.Style.STROKE);
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_ATOP));
-            paint.setStrokeWidth(LineAnimator.strokeStartWidth);
+            paint.setStrokeWidth(LineAnimatorDeuce.strokeStartWidth);
             paint.setColor(Color.parseColor("#a46fa7be"));
-            paint.setAlpha(LineAnimator.opacity);
+            paint.setAlpha(LineAnimatorDeuce.opacity);
         }
 
         void setAlpha(int alpha) {
@@ -291,20 +299,8 @@ public class LineAnimator implements PathAnimator{
             return paint.getStrokeWidth();
         }
 
-        Path getPath(){
-            return path;
-        }
-
         Paint getPaint(){
             return paint;
-        }
-
-        void recycle(){
-            path.rewind();
-        }
-
-        void reset() {
-            path.reset();
         }
     }
 
@@ -320,7 +316,7 @@ public class LineAnimator implements PathAnimator{
     }
 
     public void setOpacity(int opacity){
-        LineAnimator.opacity = opacity;
+        LineAnimatorDeuce.opacity = opacity;
     }
 
     public void setAnimationDuration(int duration){
