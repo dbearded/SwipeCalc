@@ -14,7 +14,6 @@ import android.widget.TextView;
 
 import com.example.sputnik.gesturecalc.R;
 import com.example.sputnik.gesturecalc.anim.FactoryAnimator;
-import com.example.sputnik.gesturecalc.anim.LineAnimatorDeuce;
 import com.example.sputnik.gesturecalc.anim.PathAnimator;
 import com.example.sputnik.gesturecalc.calc.animeditor.AnimEditorActivity;
 import com.example.sputnik.gesturecalc.util.ButtonGrid;
@@ -44,8 +43,7 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
         preview = root.findViewById(R.id.preview);
         Button designEditor = root.findViewById(R.id.buttonAnimEditor);
 
-//        final PathAnimator animator = FactoryAnimator.makeAnimator(FactoryAnimator.Type.Circle);
-        final PathAnimator animator = new LineAnimatorDeuce();
+        final PathAnimator animator = FactoryAnimator.makeAnimator(FactoryAnimator.Type.Circle);
         PathActivator activator = new PathActivator();
 
         final ViewTreeObserver viewTreeObserver = ((ViewGroup) buttonGrid).getViewTreeObserver();
