@@ -15,7 +15,9 @@ import android.view.MotionEvent;
 
 import com.example.sputnik.gesturecalc.util.PathActivator;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedList;
 
 /**
@@ -35,8 +37,8 @@ public class CircleAnimator implements PathAnimator{
     private Path path;
     private PathMeasure pathMeasure;
     private LinkedList<CircleHolder> circles = new LinkedList<>();
-    private LinkedList<CircleHolder> circleSpecial = new LinkedList<>();
     private LinkedList<CircleHolder> circleSubset = new LinkedList<>();
+    private LinkedList<CircleHolder> specialCircles = new LinkedList<>();
     private ArrayList<Rect> noDrawRects = new ArrayList<>();
     private int newAnimationCount = 0;
     private int contourCount = 0;
@@ -48,6 +50,8 @@ public class CircleAnimator implements PathAnimator{
     private int canvasWidth, canvasHeight;
     private boolean invalidate;
     private boolean newContourPrevAdded;
+    private CircleHolder drawCircle;
+    private LinkedList<CircleHolder> drawCircles;
 
     class CircleHolder {
         private float x, y;
@@ -132,11 +136,7 @@ public class CircleAnimator implements PathAnimator{
         return result;
     }
 
-    private void createSpecialCircle(float x, float y){
-        CircleHolder circle = new CircleHolder(circleStartDiameter, x - circleStartDiameter / 2, y - circleStartDiameter / 2);
-        circleSpecial.add(circle);
-        newAnimationCount++;
-    }    public void setCanvasSize(int width, int height) {
+    public void setCanvasSize(int width, int height) {
         canvasWidth = width;
         canvasHeight = height;
     }
@@ -244,8 +244,6 @@ public class CircleAnimator implements PathAnimator{
         newAnimationCount++;
     }
 
-
-
     public void clear(){
         clearCircles();
         path.rewind();
@@ -320,23 +318,30 @@ public class CircleAnimator implements PathAnimator{
     }
 
     private void drawCircles(Canvas canvas){
-        LinkedList<CircleHolder> tempCircles;
         if (drawingSubset) {
-            tempCircles = circleSubset;
+            drawCircles = circleSubset;
             drawingSubset = false;
         } else {
-            tempCircles = circles;
+            drawCircles = circles;
         }
-        for (int i = 0; i < tempCircles.size(); i++) {
-            CircleHolder circle = tempCircles.get(i);
+        for (int i = 0; i < drawCircles.size(); i++) {
+            drawCircle = drawCircles.get(i);
+            if (drawCircle.getShape().getPaint().getColor() == Color.RED){
+                specialCircles.add(drawCircle);
+            }
             canvas.save();
-            canvas.translate(circle.getX(), circle.getY());
-            circle.getShape().draw(canvas);
+            canvas.translate(drawCircle.getX(), drawCircle.getY());
+            drawCircle.getShape().draw(canvas);
+            canvas.restore();
+        }
+        while(!specialCircles.isEmpty()) {
+            drawCircle = specialCircles.remove();
+            canvas.save();
+            canvas.translate(drawCircle.getX(), drawCircle.getY());
+            drawCircle.getShape().draw(canvas);
             canvas.restore();
         }
     }
-
-
 
     public void setStartSize(float size){
         circleStartDiameter = size;
@@ -346,8 +351,6 @@ public class CircleAnimator implements PathAnimator{
         circleEndDiameter = size;
     }
 
-
-
     public void setOpacity(int opacity){
         CircleAnimator.opacity = opacity;
     }
@@ -356,7 +359,6 @@ public class CircleAnimator implements PathAnimator{
         animationDuration = duration;
     }
 
-
     public float getStartSize(){
         return circleStartDiameter;
     }
@@ -364,8 +366,6 @@ public class CircleAnimator implements PathAnimator{
     public float getEndSize(){
         return circleEndDiameter;
     }
-
-
 
     public int getOpacity(){
         return opacity;
