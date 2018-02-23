@@ -1,9 +1,6 @@
 package com.example.sputnik.gesturecalc.util;
 
-import android.view.View;
-import android.view.ViewGroup;
-
-import com.example.sputnik.gesturecalc.anim.PathAnimator;
+import com.example.sputnik.gesturecalc.anim.Animator;
 
 /**
  * Created by Sputnik on 2/16/2018.
@@ -14,7 +11,7 @@ public interface ButtonGrid {
         void buttonPressed(String input);
     }
 
-    void setPathAnimator(PathAnimator animator);
+    void setPathAnimator(Animator animator);
 
     void setPathActivator(final PathActivator activator);
 

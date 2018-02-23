@@ -1,16 +1,5 @@
 package com.example.sputnik.gesturecalc.calc.animeditor;
 
-import android.os.Build;
-import android.support.v7.widget.AppCompatEditText;
-import android.support.v7.widget.AppCompatSeekBar;
-import android.support.v7.widget.SwitchCompat;
-import android.view.ViewTreeObserver;
-import android.widget.TextView;
-
-import com.example.sputnik.gesturecalc.util.ButtonGridCompat;
-import com.example.sputnik.gesturecalc.util.PathActivator;
-import com.example.sputnik.gesturecalc.anim.CircleAnimator;
-import com.example.sputnik.gesturecalc.R;
 import com.example.sputnik.gesturecalc.data.Expression;
 import com.example.sputnik.gesturecalc.data.MathSymbol;
 

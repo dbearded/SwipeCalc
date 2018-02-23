@@ -22,16 +22,13 @@ import java.util.LinkedList;
  * Created by Sputnik on 2/7/2018.
  */
 
-public class CircleAnimator implements PathAnimator{
-
-    private float touchSlop = 16f;
+class CircleAnimator extends com.example.sputnik.gesturecalc.anim.Animator {
 
     private Path path;
     private PathMeasure pathMeasure;
     private LinkedList<CircleHolder> circles = new LinkedList<>();
     private LinkedList<CircleHolder> circleSubset = new LinkedList<>();
     private LinkedList<CircleHolder> specialCircles = new LinkedList<>();
-    private ArrayList<Rect> noDrawRects = new ArrayList<>();
     private int newAnimationCount = 0;
     private int contourCount = 0;
     private float discreteLength;
@@ -39,12 +36,10 @@ public class CircleAnimator implements PathAnimator{
     private int animationCount;
     private boolean drawingSubset;
     private float prevX, prevY;
-    private int canvasWidth, canvasHeight;
     private boolean invalidate;
     private boolean newContourPrevAdded;
     private CircleHolder drawCircle;
     private LinkedList<CircleHolder> drawCircles;
-    private Settings settings;
 
     class CircleHolder {
         private float x, y;
@@ -55,7 +50,7 @@ public class CircleAnimator implements PathAnimator{
             circle.resize(diameter, diameter);
             this.shape = new ShapeDrawable(circle);
             shape.getPaint().setColor(Color.parseColor("#a46fa7be"));
-            shape.getPaint().setAlpha(settings.getOpacity());
+            shape.getPaint().setAlpha(getOpacity());
             this.x = x;
             this.y = y;
         }
@@ -97,36 +92,15 @@ public class CircleAnimator implements PathAnimator{
         }
     }
 
-    public CircleAnimator(){
+    public CircleAnimator(Settings settings){
+        super(settings);
         path = new Path();
         pathMeasure = new PathMeasure();
-        settings = new Settings();
     }
 
     public void reDrawTo(int progress) {
         reDrawCirclesTo(progress);
         drawingSubset = true;
-    }
-
-    @Override
-    public void addNoDrawRect(Rect rect) {
-        noDrawRects.add(rect);
-    }
-
-    private boolean inNoDrawRects(float x, float y){
-        boolean result = false;
-        for (Rect rect :
-                noDrawRects) {
-            if (rect.contains((int) x, (int) y)) {
-                return true;
-            }
-        }
-        return result;
-    }
-
-    public void setCanvasSize(int width, int height) {
-        canvasWidth = width;
-        canvasHeight = height;
     }
 
     private void reDrawCirclesTo(int progress) {
@@ -144,8 +118,47 @@ public class CircleAnimator implements PathAnimator{
         createCircle(x,y);
         CircleHolder specialCircle = circles.getLast();
         specialCircle.setColor(Color.RED);
-        specialCircle.setDiameter(settings.getStartSize());
+        specialCircle.setDiameter(getStartSize());
         addAnimators();
+    }
+
+    @Override
+    public void addEvent(MotionEvent event) {
+        float evX = event.getX();
+        float evY = event.getY();
+
+        int actionType = event.getAction();
+        switch (actionType) {
+            case MotionEvent.ACTION_DOWN:
+                if (inNoDrawRects(evX, evY)){
+                    invalidate = true;
+                    return;
+                }
+                addPoint(evX, evY, true);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (invalidate){
+                    return;
+                }
+                int count = event.getHistorySize();
+                for (int i = 0; i < count; i++) {
+                    float histX = event.getHistoricalX(i);
+                    float histY = event.getHistoricalY(i);
+                    if (PathActivator.euclidDistance(histX, histY, prevX, prevY) < getTouchSlop()) {
+                        continue;
+                    }
+                    addPoint(histX, histY, false);
+                }
+                if (PathActivator.euclidDistance(evX, evY, prevX, prevY) < getTouchSlop()) {
+                    break;
+                }
+                addPoint(evX, evY, false);
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                invalidate = false;
+                break;
+        }
     }
 
     private void addPoint(float x, float y, boolean newContour) {
@@ -173,47 +186,8 @@ public class CircleAnimator implements PathAnimator{
 
     }
 
-    @Override
-    public void addEvent(MotionEvent event) {
-        float evX = event.getX();
-        float evY = event.getY();
-
-        int actionType = event.getAction();
-        switch (actionType) {
-            case MotionEvent.ACTION_DOWN:
-                if (inNoDrawRects(evX, evY)){
-                    invalidate = true;
-                    return;
-                }
-                addPoint(evX, evY, true);
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (invalidate){
-                    return;
-                }
-                int count = event.getHistorySize();
-                for (int i = 0; i < count; i++) {
-                    float histX = event.getHistoricalX(i);
-                    float histY = event.getHistoricalY(i);
-                    if (PathActivator.euclidDistance(histX, histY, prevX, prevY) < touchSlop) {
-                        continue;
-                    }
-                    addPoint(histX, histY, false);
-                }
-                if (PathActivator.euclidDistance(evX, evY, prevX, prevY) < touchSlop) {
-                    break;
-                }
-                addPoint(evX, evY, false);
-                break;
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                invalidate = false;
-                break;
-        }
-    }
-
     private void addCircles(){
-        float spacing = settings.getSpacing();
+        float spacing = getSpacing();
         float segmentLength = pathMeasure.getLength() - discreteLength;
         if (segmentLength < spacing) {
             return;
@@ -224,13 +198,6 @@ public class CircleAnimator implements PathAnimator{
             pathMeasure.getPosTan(discreteLength, circPos, null);
             createCircle(circPos[0], circPos[1]);
         }
-    }
-
-    private void createCircle(float x, float y) {
-        float diameter = settings.getStartSize();
-        CircleHolder circle = new CircleHolder(diameter, x - diameter / 2, y - diameter / 2);
-        circles.add(circle);
-        newAnimationCount++;
     }
 
     public void clear(){
@@ -244,11 +211,6 @@ public class CircleAnimator implements PathAnimator{
         discreteLength = 0;
     }
 
-    @Override
-    public void applySettings(Settings settings) {
-        this.settings = settings;
-    }
-
     private void clearCircles(){
         circles.clear();
         circleSubset.clear();
@@ -258,62 +220,16 @@ public class CircleAnimator implements PathAnimator{
         return animationCount != 0;
     }
 
-    // add animators to any new trace points
-    private void addAnimators() {
-        // Setting for disabling animations
-        if (settings.getAnimationDuration() == 0){
-            newAnimationCount = 0;
-            return;
-        }
-        while(newAnimationCount > 0){
-            newCircleAnimation();
-            newAnimationCount--;
-        }
-        // Now count is less than zero. Need to reset
-        newAnimationCount = 0;
-    }
-
-    private void newCircleAnimation(){
-        int size = circles.size();
-        ObjectAnimator animator = ObjectAnimator.ofFloat(circles.get(size - newAnimationCount), "diameter", settings.getEndSize());
-        animator.setDuration(settings.getAnimationDuration());
-        animator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                CircleHolder tempCircle = (CircleHolder) ((ObjectAnimator) animation).getTarget();
-                // Have to check first in case it was removed with reset()
-                if (circles.contains(tempCircle)){
-                    circles.remove(tempCircle);
-                }
-                animationCount--;
-            }
-        });
-        animator.start();
-        animationCount++;
-    }
-
     public void updateCanvas(Canvas canvas){
         drawCircles(canvas);
     }
 
     @Override
     public void recycle() {
-
-    }
-
-    @Override
-    public int getCanvasWidth() {
-        return canvasWidth;
-    }
-
-    @Override
-    public int getCanvasHeight() {
-        return canvasHeight;
-    }
-
-    @Override
-    public Settings getSettings() {
-        return settings;
+        path.reset();
+        circles.clear();
+        circleSubset.clear();
+        specialCircles.clear();
     }
 
     private void drawCircles(Canvas canvas){
@@ -340,5 +256,46 @@ public class CircleAnimator implements PathAnimator{
             drawCircle.getShape().draw(canvas);
             canvas.restore();
         }
+    }
+
+    private void createCircle(float x, float y) {
+        float diameter = getStartSize();
+        CircleHolder circle = new CircleHolder(diameter, x - diameter / 2, y - diameter / 2);
+        circles.add(circle);
+        newAnimationCount++;
+    }
+
+    // add animators to any new trace points
+    private void addAnimators() {
+        // Setting for disabling animations
+        if (getAnimationDuration() == 0){
+            newAnimationCount = 0;
+            return;
+        }
+        while(newAnimationCount > 0){
+            newCircleAnimation();
+            newAnimationCount--;
+        }
+        // Now count is less than zero. Need to reset
+        newAnimationCount = 0;
+    }
+
+    private void newCircleAnimation(){
+        int size = circles.size();
+        ObjectAnimator animator = ObjectAnimator.ofFloat(circles.get(size - newAnimationCount), "diameter", getEndSize());
+        animator.setDuration(getAnimationDuration());
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                CircleHolder tempCircle = (CircleHolder) ((ObjectAnimator) animation).getTarget();
+                // Have to check first in case it was removed with reset()
+                if (circles.contains(tempCircle)){
+                    circles.remove(tempCircle);
+                }
+                animationCount--;
+            }
+        });
+        animator.start();
+        animationCount++;
     }
 }

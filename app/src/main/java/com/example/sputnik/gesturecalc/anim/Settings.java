@@ -4,19 +4,20 @@ package com.example.sputnik.gesturecalc.anim;
  * Created by Sputnik on 2/22/2018.
  */
 
-public class Settings implements Customizable {
+public class Settings {
     private float startSize = 16f;
     private float endSize = 0f;
     private float spacing = 20f;
     private int opacity = 164;
     private long duration = 900l;
-    private FactoryAnimator.Type type;
+    private Animator.Type type = Animator.Type.Circle;
+    private float touchSlop = 16f;
 
-    public FactoryAnimator.Type getType() {
+    public Animator.Type getType() {
         return type;
     }
 
-    public void setType(FactoryAnimator.Type type) {
+    public void setType(Animator.Type type) {
         this.type = type;
     }
 
@@ -24,48 +25,47 @@ public class Settings implements Customizable {
         startSize = size;
     }
 
-    @Override
     public void setEndSize(float size) {
         endSize = size;
     }
 
-    @Override
     public void setOpacity(int opacity) {
         this.opacity = opacity;
     }
 
-    @Override
     public void setAnimationDuration(long duration) {
         this.duration = duration;
     }
 
-    @Override
-    public void setSpacting(float spacing) {
+    public void setSpacing(float spacing) {
         this.spacing = spacing;
     }
 
-    @Override
     public float getStartSize() {
         return startSize;
     }
 
-    @Override
     public float getEndSize() {
         return endSize;
     }
 
-    @Override
     public int getOpacity() {
         return opacity;
     }
 
-    @Override
     public long getAnimationDuration() {
         return duration;
     }
 
-    @Override
     public float getSpacing() {
         return spacing;
+    }
+
+    public float getTouchSlop() {
+        return touchSlop;
+    }
+
+    public void setTouchSlop(float touchSlop){
+        this.touchSlop = touchSlop;
     }
 }

@@ -2,6 +2,7 @@ package com.example.sputnik.gesturecalc.calc.basiccalc;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -13,20 +14,28 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.example.sputnik.gesturecalc.R;
-import com.example.sputnik.gesturecalc.anim.FactoryAnimator;
-import com.example.sputnik.gesturecalc.anim.PathAnimator;
+import com.example.sputnik.gesturecalc.anim.Animator;
 import com.example.sputnik.gesturecalc.calc.animeditor.AnimEditorActivity;
 import com.example.sputnik.gesturecalc.util.ButtonGrid;
 import com.example.sputnik.gesturecalc.util.PathActivator;
+import com.example.sputnik.gesturecalc.util.Util;
 
 /**
  * Created by Sputnik on 2/16/2018.
  */
 
-public class BasicCalcFragment extends Fragment implements BasicCalcContract.View {
+public class BasicCalcFragment extends Fragment implements BasicCalcContract.View, SharedPreferences.OnSharedPreferenceChangeListener {
 
     private BasicCalcContract.Presenter presenter;
+    private Animator animator;
     private TextView display, preview;
+    private SharedPreferences sharedPref;
+    private ButtonGrid buttonGrid;
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        Util.updateAnimatorSettingsOnChange(animator, sharedPreferences, key);
+    }
 
     @Override
     public void setPresenter(BasicCalcContract.Presenter presenter) {
@@ -38,12 +47,11 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.frag_basic_calc, container, false);
 
-        final ButtonGrid buttonGrid = root.findViewById(R.id.gridLayout);
+        buttonGrid = root.findViewById(R.id.gridLayout);
         display = root.findViewById(R.id.display);
         preview = root.findViewById(R.id.preview);
         Button designEditor = root.findViewById(R.id.buttonAnimEditor);
 
-        final PathAnimator animator = FactoryAnimator.makeAnimator(FactoryAnimator.Type.Circle);
         PathActivator activator = new PathActivator();
 
         final ViewTreeObserver viewTreeObserver = ((ViewGroup) buttonGrid).getViewTreeObserver();
@@ -55,11 +63,11 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
                 } else {
                     ((ViewGroup) buttonGrid).getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
+                // layout will happen after first onResume() so this won't cause a NPE
                 animator.setCanvasSize(((ViewGroup) buttonGrid).getWidth(), ((ViewGroup) buttonGrid).getHeight());
             }
         });
         buttonGrid.setPathActivator(activator);
-        buttonGrid.setPathAnimator(animator);
 
         presenter.start();
         buttonGrid.registerButtonListener(new ButtonGrid.ButtonListener() {
@@ -77,7 +85,24 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
             }
         });
 
+        sharedPref = Util.getSharedPrefSettings(getActivity());
+
         return root;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        animator = Animator.changeSettings(animator, Util.loadAnimatorSettings(getActivity()));
+        buttonGrid.setPathAnimator(animator);
+        sharedPref.registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onPause() {
+        sharedPref.unregisterOnSharedPreferenceChangeListener(this);
+        Util.saveAnimatorSettings(getActivity(), animator.getSettings());
+        super.onPause();
     }
 
     @Override

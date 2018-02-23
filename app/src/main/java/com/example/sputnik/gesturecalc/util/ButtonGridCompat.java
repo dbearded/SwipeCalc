@@ -13,7 +13,7 @@ import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import com.example.sputnik.gesturecalc.R;
-import com.example.sputnik.gesturecalc.anim.PathAnimator;
+import com.example.sputnik.gesturecalc.anim.Animator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.Observer;
 public class ButtonGridCompat extends android.support.v7.widget.GridLayout implements ButtonGrid {
 //    private final float STROKE_WIDTH = 18f;
     private List<ButtonGrid.ButtonListener> buttonListeners = new ArrayList<>();
-    private PathAnimator animator;
+    private Animator animator;
     private PathActivator activator;
     private Rect buttonBoundary = new Rect();
 
@@ -49,7 +49,7 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
         setup();
     }
 
-    public void setPathAnimator(PathAnimator animator){
+    public void setPathAnimator(Animator animator){
         this.animator = animator;
     }
 

@@ -16,7 +16,6 @@ import android.view.MotionEvent;
 
 import com.example.sputnik.gesturecalc.util.PathActivator;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -24,13 +23,10 @@ import java.util.LinkedList;
  * Created by Sputnik on 2/7/2018.
  */
 
-public class LineAnimator implements PathAnimator{
-
-    private float touchSlop = 16f;
+class LineAnimator extends com.example.sputnik.gesturecalc.anim.Animator {
 
     private LinkedList<LineHolder> lines = new LinkedList<>();
     private LinkedList<LineHolder> lineSubset = new LinkedList<>();
-    private ArrayList<Rect> noDrawRects = new ArrayList<>();
     private int newAnimationCount = 0;
     private int animationCount;
     private boolean drawingSubset = false;
@@ -38,36 +34,67 @@ public class LineAnimator implements PathAnimator{
     private Canvas animCanvas;
     private Bitmap animBitmap;
     private boolean invalidate;
-    private Settings settings;
 
-    public LineAnimator(){
-        settings = new Settings();
+    // Use a linear gradient along line for color change
+    // animate the color
+    class LineHolder {
+        private Path path;
+        private Paint paint;
+
+        LineHolder(Path segment) {
+            path = segment;
+            paint = new Paint();
+            paint.setAntiAlias(true);
+            paint.setDither(true);
+            paint.setStrokeJoin(Paint.Join.MITER);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_ATOP));
+            paint.setStrokeWidth(getStartSize());
+            paint.setColor(Color.parseColor("#a46fa7be"));
+            paint.setAlpha(getOpacity());
+        }
+
+        int getAlpha() {
+            return paint.getAlpha();
+        }
+
+        void setAlpha(int alpha) {
+            paint.setAlpha(alpha);
+        }
+
+        float getWidth() {
+            return paint.getStrokeWidth();
+        }
+
+        void setWidth(float width) {
+            paint.setStrokeWidth(width);
+        }
+
+        Path getPath(){
+            return path;
+        }
+
+        Paint getPaint(){
+            return paint;
+        }
+
+        void recycle(){
+            path.rewind();
+        }
+
+        void reset() {
+            path.reset();
+        }
+    }
+
+    public LineAnimator(Settings settings){
+        super(settings);
     }
 
     public void reDrawTo(int progress) {
         reDrawLineTo(progress);
         drawingSubset = true;
-    }
-
-    @Override
-    public void addNoDrawRect(Rect rect) {
-        noDrawRects.add(rect);
-    }
-
-    private boolean inNoDrawRects(float x, float y){
-        boolean result = false;
-        for (Rect rect :
-                noDrawRects) {
-            if (rect.contains((int) x, (int) y)) {
-                return true;
-            }
-        }
-        return result;
-    }
-
-    public void setCanvasSize(int width, int height) {
-        animBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        animCanvas = new Canvas(animBitmap);
     }
 
     private void reDrawLineTo(int progress){
@@ -79,20 +106,6 @@ public class LineAnimator implements PathAnimator{
     }
 
     public void addSpecialPoint(float x, float y){
-    }
-
-    private void addPoint(float x, float y, boolean newContour) {
-        if (newContour) {
-            prevX = 0;
-            prevY = 0;
-            addLine(x, y);
-            addAnimators();
-        }
-        addLine(x, y);
-        addAnimators();
-//        contourLength = pathMeasure.getLength();
-        prevX = x;
-        prevY = y;
     }
 
     @Override
@@ -117,12 +130,12 @@ public class LineAnimator implements PathAnimator{
                 for (int i = 0; i < count; i++) {
                     float histX = event.getHistoricalX(i);
                     float histY = event.getHistoricalY(i);
-                    if (PathActivator.euclidDistance(histX, histY, prevX, prevY) < touchSlop) {
+                    if (PathActivator.euclidDistance(histX, histY, prevX, prevY) < getTouchSlop()) {
                         continue;
                     }
                     addPoint(histX, histY, false);
                 }
-                if (PathActivator.euclidDistance(evX, evY, prevX, prevY) < touchSlop) {
+                if (PathActivator.euclidDistance(evX, evY, prevX, prevY) < getTouchSlop()) {
                     break;
                 }
                 addPoint(evX, evY, false);
@@ -132,6 +145,20 @@ public class LineAnimator implements PathAnimator{
                 invalidate = false;
                 break;
         }
+    }
+
+    private void addPoint(float x, float y, boolean newContour) {
+        if (newContour) {
+            prevX = 0;
+            prevY = 0;
+            addLine(x, y);
+            addAnimators();
+        }
+        addLine(x, y);
+        addAnimators();
+//        contourLength = pathMeasure.getLength();
+        prevX = x;
+        prevY = y;
     }
 
     private void addLine(float x, float y){
@@ -145,19 +172,53 @@ public class LineAnimator implements PathAnimator{
         createLine(segment);
     }
 
+    // add animators to any new trace points
+    private void addAnimators() {
+        // Setting for disabling animations
+        if (getAnimationDuration() == 0){
+            newAnimationCount = 0;
+            return;
+        }
+        while(newAnimationCount > 0){
+            newLineAnimation();
+            newAnimationCount--;
+        }
+        // Now count is less than zero. Need to reset
+        newAnimationCount = 0;
+    }
+
     private void createLine(Path segment) {
         LineHolder line = new LineHolder(segment);
         lines.add(line);
         newAnimationCount++;
     }
 
-    public void clear() {
-        reset();
+    private void newLineAnimation(){
+        int size = lines.size();
+        AnimatorSet animatorSet = new AnimatorSet();
+        LineHolder tempLine = lines.get(size - newAnimationCount);
+        ObjectAnimator widthAnim = ObjectAnimator.ofFloat(tempLine, "width", getEndSize());
+        widthAnim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                LineHolder tempLine = (LineHolder) ((ObjectAnimator) animation).getTarget();
+                if (lines.contains(tempLine)){
+//                    lines.get(lines.indexOf(tempLine)).recycle(); // Use this later
+                    lines.remove(tempLine);
+                }
+                animationCount--;
+            }
+        });
+        widthAnim.setDuration(getAnimationDuration());
+        ObjectAnimator alphaAnim = ObjectAnimator.ofInt(tempLine, "alpha", 0);
+        alphaAnim.setDuration(getAnimationDuration());
+        animatorSet.play(widthAnim).with(alphaAnim);
+        animatorSet.start();
+        animationCount++;
     }
 
-    @Override
-    public void applySettings(Settings settings) {
-        this.settings = settings;
+    public void clear() {
+        reset();
     }
 
     private void reset() {
@@ -181,67 +242,26 @@ public class LineAnimator implements PathAnimator{
         return animationCount != 0;
     }
 
-    // add animators to any new trace points
-    private void addAnimators() {
-        // Setting for disabling animations
-        if (settings.getAnimationDuration() == 0){
-            newAnimationCount = 0;
-            return;
-        }
-        while(newAnimationCount > 0){
-            newLineAnimation();
-            newAnimationCount--;
-        }
-        // Now count is less than zero. Need to reset
-        newAnimationCount = 0;
-    }
-
-    private void newLineAnimation(){
-        int size = lines.size();
-        AnimatorSet animatorSet = new AnimatorSet();
-        LineHolder tempLine = lines.get(size - newAnimationCount);
-        ObjectAnimator widthAnim = ObjectAnimator.ofFloat(tempLine, "width", settings.getEndSize());
-        widthAnim.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                LineHolder tempLine = (LineHolder) ((ObjectAnimator) animation).getTarget();
-                if (lines.contains(tempLine)){
-//                    lines.get(lines.indexOf(tempLine)).recycle(); // Use this later
-                    lines.remove(tempLine);
-                }
-                animationCount--;
-            }
-        });
-        widthAnim.setDuration(settings.getAnimationDuration());
-        ObjectAnimator alphaAnim = ObjectAnimator.ofInt(tempLine, "alpha", 0);
-        alphaAnim.setDuration(settings.getAnimationDuration());
-        animatorSet.play(widthAnim).with(alphaAnim);
-        animatorSet.start();
-        animationCount++;
-    }
-
     public void updateCanvas(Canvas canvas){
         drawLines(canvas);
     }
 
     @Override
     public void recycle() {
-
+        for (LineHolder line :
+                lines) {
+            line.getPath().reset();
+        }
+        lines.clear();
     }
 
-    @Override
-    public int getCanvasWidth() {
-        return animBitmap.getWidth();
-    }
-
-    @Override
-    public int getCanvasHeight() {
-        return animBitmap.getHeight();
-    }
-
-    @Override
-    public Settings getSettings() {
-        return settings;
+    public void setCanvasSize(int width, int height) {
+        super.setCanvasSize(width, height);
+        if (width <= 0 || height <= 0){
+            return;
+        }
+        animBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        animCanvas = new Canvas(animBitmap);
     }
 
     private void drawLines(Canvas canvas) {
@@ -258,66 +278,5 @@ public class LineAnimator implements PathAnimator{
             animCanvas.drawPath(lines.get(i).getPath(), lines.get(i).getPaint());
         }
         canvas.drawBitmap(animBitmap, 0, 0, null);
-    }
-
-    // Use a linear gradient along line for color change
-    // animate the color
-    class LineHolder {
-        private Path path;
-        private Paint paint;
-
-        LineHolder(Path segment) {
-            path = segment;
-            paint = new Paint();
-            paint.setAntiAlias(true);
-            paint.setDither(true);
-            paint.setStrokeJoin(Paint.Join.MITER);
-            paint.setStrokeCap(Paint.Cap.ROUND);
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_ATOP));
-            paint.setStrokeWidth(settings.getStartSize());
-            paint.setColor(Color.parseColor("#a46fa7be"));
-            paint.setAlpha(settings.getOpacity());
-        }
-
-        void setAlpha(int alpha) {
-            paint.setAlpha(alpha);
-        }
-
-        void setWidth(float width) {
-            paint.setStrokeWidth(width);
-        }
-
-        int getAlpha() {
-            return paint.getAlpha();
-        }
-
-        float getWidth() {
-            return paint.getStrokeWidth();
-        }
-
-        Path getPath(){
-            return path;
-        }
-
-        Paint getPaint(){
-            return paint;
-        }
-
-        void recycle(){
-            path.rewind();
-        }
-
-        void reset() {
-            path.reset();
-        }
-    }
-
-    public float getTouchSlop(){
-        return touchSlop;
-    }
-
-    public void setTouchSlop(float touchSlop) {
-        this.touchSlop = touchSlop;
     }
 }
