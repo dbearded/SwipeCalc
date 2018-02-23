@@ -114,7 +114,7 @@ public class PathActivator extends Observable {
         Rect temp = viewBoundaryListener.updateViewBounds(curX, curY);
         curRectView = temp;
         // new view bounds so restart activations
-        restart();
+//        restart();
     }
 
     public float getTouchSlop() {
@@ -139,6 +139,7 @@ public class PathActivator extends Observable {
                 addPoint(evX, evY);
                 activate();
                 downPoint.set(evX, evY);
+                getNewViewBounds();
                 prevActionType = MotionEvent.ACTION_DOWN;
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -235,6 +236,7 @@ public class PathActivator extends Observable {
         if (viewBoundaryListener != null) {
             if (curRectView == null || curRectView.isEmpty() || !curRectView.contains((int) curX, (int) curY)){
                 getNewViewBounds();
+                restart();
             }
         }
     }
