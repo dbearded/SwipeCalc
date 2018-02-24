@@ -11,12 +11,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.SeekBar;
-import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.example.sputnik.gesturecalc.R;
 import com.example.sputnik.gesturecalc.anim.Animator;
@@ -35,10 +36,9 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
     Animator animator;
     ButtonGrid buttonGrid;
     TextView display, preview;
-    SeekBar spacingBar, sizeBar, durationBar, opacityBar, pathBar;
-    EditText sizeEdit, spacingEdit, durationEdit, opacityEdit;
+    SeekBar spacingBar, sizeBar, durationBar, opacityBar;
     Switch shapeSwitch;
-    Spinner spinner;
+    Button defaultButton;
 
     abstract class MySeekBarChangeListener implements SeekBar.OnSeekBarChangeListener{
 
@@ -116,15 +116,9 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
         spacingBar = root.findViewById(R.id.seekBarSpacing);
         durationBar = root.findViewById(R.id.seekBarDuration);
         opacityBar = root.findViewById(R.id.seekBarOpacity);
-        pathBar = root.findViewById(R.id.seekBarPath);
-
-        sizeEdit = root.findViewById(R.id.editNumberSize);
-        spacingEdit = root.findViewById(R.id.editNumberSpacing);
-        durationEdit = root.findViewById(R.id.editNumberDuration);
-        opacityEdit = root.findViewById(R.id.editNumberOpacity);
 
         shapeSwitch = root.findViewById(R.id.switchCircleLine);
-        spinner = root.findViewById(R.id.spinnerSetting);
+        defaultButton = root.findViewById(R.id.buttonDefaults);
 
         presenter.start();
 
@@ -156,27 +150,50 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
         preview.setText(expression);
     }
 
-    private void updateCustomizeables(Settings settings) {
-        int sizeInit = (int) settings.getStartSize();
-        int spacingInit = (int) settings.getSpacing();
-        int durationInit = (int) settings.getAnimationDuration();
-        int opacityInit = settings.getOpacity();
-        boolean isChecked = settings.getType().equals(Animator.Type.Line);
+    @Override
+    public void showDevOpts() {
+        final SeekBar pathBar = getView().findViewById(R.id.seekBarPath);
+        TextView path = getView().findViewById(R.id.textViewPath);
+        final EditText sizeEdit = getView().findViewById(R.id.editNumberSize);
+        final EditText spacingEdit = getView().findViewById(R.id.editNumberSpacing);
+        final EditText durationEdit = getView().findViewById(R.id.editNumberDuration);
+        final EditText opacityEdit = getView().findViewById(R.id.editNumberOpacity);
+        ToggleButton site = getView().findViewById(R.id.toggleSite);
 
-        sizeBar.setProgress(sizeInit);
-        spacingBar.setProgress(spacingInit);
-        durationBar.setProgress(durationInit);
-        opacityBar.setProgress(opacityInit);
+        pathBar.setVisibility(View.VISIBLE);
+        path.setVisibility(View.VISIBLE);
+        sizeEdit.setVisibility(View.VISIBLE);
+        spacingEdit.setVisibility(View.VISIBLE);
+        durationEdit.setVisibility(View.VISIBLE);
+        opacityEdit.setVisibility(View.VISIBLE);
+        site.setVisibility(View.VISIBLE);
+
+        int sizeInit = (int) animator.getStartSize();
+        int spacingInit = (int) animator.getSpacing();
+        int durationInit = (int) animator.getAnimationDuration();
+        int opacityInit = animator.getOpacity();
 
         sizeEdit.setText(String.valueOf(sizeInit));
         spacingEdit.setText(String.valueOf(spacingInit));
         durationEdit.setText(String.valueOf(durationInit));
         opacityEdit.setText(String.valueOf(opacityInit));
 
-        shapeSwitch.setChecked(isChecked);
-    }
 
-    private void setViewListeners(){
+        pathBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    animator.reDrawTo(progress);
+                    ((ViewGroup) buttonGrid).invalidate();
+                }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        // Update current SeekBar listeners
         sizeBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -237,20 +254,6 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
                 animator.setOpacity(seekBar.getProgress());
             }
         });
-        pathBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    animator.reDrawTo(progress);
-                    ((ViewGroup) buttonGrid).invalidate();
-                }
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
 
         sizeEdit.addTextChangedListener(new MyTextWatcher(sizeBar));
         spacingEdit.addTextChangedListener(new MyTextWatcher(spacingBar));
@@ -271,11 +274,127 @@ public class AnimEditorFragment extends Fragment implements AnimEditorContract.V
             }
         });
 
+        defaultButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                animator = Animator.changeToDefault(animator);
+                buttonGrid.setPathAnimator(animator);
+                updateCustomizeables(animator.getSettings());
+                sizeEdit.setText(String.valueOf((int) animator.getStartSize()));
+                spacingEdit.setText(String.valueOf((int) animator.getSpacing()));
+                durationEdit.setText(String.valueOf((int) animator.getAnimationDuration()));
+                opacityEdit.setText(String.valueOf(animator.getOpacity()));
+                shapeSwitch.setChecked(false);
+                ((ViewGroup) buttonGrid).invalidate();
+            }
+        });
+
         buttonGrid.registerButtonListener(new ButtonGrid.ButtonListener() {
             @Override
             public void buttonPressed(String input) {
                 presenter.addNewValue(input);
                 pathBar.setProgress(pathBar.getMax());
+            }
+        });
+
+    }
+
+    private void updateCustomizeables(Settings settings) {
+        int sizeInit = (int) settings.getStartSize();
+        int spacingInit = (int) settings.getSpacing();
+        int durationInit = (int) settings.getAnimationDuration();
+        int opacityInit = settings.getOpacity();
+        boolean isChecked = settings.getType().equals(Animator.Type.Line);
+
+        sizeBar.setProgress(sizeInit);
+        spacingBar.setProgress(spacingInit);
+        durationBar.setProgress(durationInit);
+        opacityBar.setProgress(opacityInit);
+
+        shapeSwitch.setChecked(isChecked);
+    }
+
+    private void setViewListeners(){
+        sizeBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) {
+                    animator.setStartSize(progress);
+                }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                animator.setStartSize(seekBar.getProgress());
+            }
+        });
+        spacingBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) {
+                    animator.setSpacing(progress);
+                }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                animator.setSpacing(seekBar.getProgress());
+            }
+        });
+        durationBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) {
+                    animator.setAnimationDuration(progress);
+                }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                animator.setAnimationDuration(seekBar.getProgress());
+            }
+        });
+        opacityBar.setOnSeekBarChangeListener(new MySeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) {
+                    animator.setOpacity(progress);
+                }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                animator.setOpacity(seekBar.getProgress());
+            }
+        });
+
+        shapeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    animator = Animator.changeType(animator, Animator.Type.Line);
+                } else {
+                    animator = Animator.changeType(animator, Animator.Type.Circle);
+                }
+                buttonGrid.setPathAnimator(animator);
+                ((ViewGroup) buttonGrid).invalidate();
+            }
+        });
+
+        defaultButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                animator = Animator.changeToDefault(animator);
+                buttonGrid.setPathAnimator(animator);
+                updateCustomizeables(animator.getSettings());
+                ((ViewGroup) buttonGrid).invalidate();
+            }
+        });
+
+        buttonGrid.registerButtonListener(new ButtonGrid.ButtonListener() {
+            @Override
+            public void buttonPressed(String input) {
+                presenter.addNewValue(input);
             }
         });
     }

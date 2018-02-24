@@ -11,6 +11,7 @@ interface AnimEditorContract {
     interface View extends BaseView<Presenter> {
         void updateDisplay(String expression);
         void updatePreview(String expression);
+        void showDevOpts();
     }
 
     interface Presenter extends BasePresenter{

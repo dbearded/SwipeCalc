@@ -51,4 +51,6 @@
         <item name="colorAccent">#bcbcbc</item>-->
     </style>
 
+    <dimen name="TextAnimEditor">18dp</dimen>
+
 </resources>

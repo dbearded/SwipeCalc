@@ -11,6 +11,8 @@ import java.util.Observer;
  */
 
 class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
+    private static final String CAKE = "84302253047020543"; // "the cake is a lie"
+    private StringBuilder builder = new StringBuilder();
     private Expression expression;
     private AnimEditorContract.View view;
 
@@ -37,18 +39,23 @@ class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
         switch(symbol){
             case "C":
                 clear();
+                clearCake();
                 break;
             case "=":
                 view.updateDisplay(expression.getValue());
                 view.updatePreview("");
+                clearCake();
                 break;
             case "\u00b1":
                 expression.add(MathSymbol.fromString("\u00af"));
+                clearCake();
             case "()":
                 expression.add(MathSymbol.fromString("("));
+                clearCake();
                 break;
             default:
                 expression.add(MathSymbol.fromString(symbol));
+                checkCake(symbol);
                 break;
         }
     }
@@ -57,5 +64,16 @@ class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
     public void update(Observable o, Object arg) {
         view.updateDisplay(expression.toStringGroupingAsInputted());
         view.updatePreview(expression.getValue());
+    }
+
+    private void checkCake(String symbol){
+        builder.append(symbol);
+        if (builder.toString().equals(CAKE)){
+            view.showDevOpts();
+        }
+    }
+
+    private void clearCake(){
+        builder.setLength(0);
     }
 }

@@ -177,6 +177,10 @@ public abstract class Animator {
         return animator;
     }
 
+    public static Animator changeToDefault(Animator animator){
+        return changeSettings(animator, new Settings());
+    }
+
     public final Type getType(){
         return type;
     }
