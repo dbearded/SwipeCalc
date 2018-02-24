@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.EnumSet;
 import java.util.Observable;
 
@@ -24,8 +23,7 @@ public class Expression extends Observable {
     private ExpressionNode head;
     private ExpressionNode previous;
     private StringBuilder numberBuilder = new StringBuilder();
-    private MathContext mathContext = new MathContext(14, RoundingMode.HALF_EVEN);
-    private DecimalFormat decimalFormat = new DecimalFormat("0.##############");
+    private MathContext mathContext = new MathContext(12, RoundingMode.HALF_EVEN);
     private int groupLevel = 0;
     // Used for early breaking out of previous
     private boolean foundPrevious = false;
@@ -137,12 +135,6 @@ public class Expression extends Observable {
     }
 
     private static class NumberNode extends ExpressionNode {
-        private DecimalFormat decimalFormat;
-
-        NumberNode(BigDecimal number, DecimalFormat format){
-            this(number);
-            this.decimalFormat = format;
-        }
 
         NumberNode(BigDecimal number) {
             super(ExpressionType.NUMBER);
@@ -157,7 +149,7 @@ public class Expression extends Observable {
 
         @Override
         public String toString() {
-            return decimalFormat.format(number);
+            return number.toString();
         }
     }
 
@@ -277,7 +269,7 @@ public class Expression extends Observable {
      */
     public String forceEvaluate() {
         forceEvaluate(head);
-        return decimalFormat.format(head.number);
+        return head.number.toString();
     }
 
     /**
@@ -289,7 +281,8 @@ public class Expression extends Observable {
         if (head == null || head.number == null) {
             return "";
         }
-        return decimalFormat.format(head.number);
+
+        return head.number.toString();
     }
 
     public String toStringGroupingAsInputted() {
@@ -337,9 +330,9 @@ public class Expression extends Observable {
         if (previous == null) {
             if (numerals.contains(symbol)) {
                 if (symbol.equals(MathSymbol.DECIMAL)){
-                    expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                    expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext));
                 } else {
-                    expressionNode = new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
+                    expressionNode = new NumberNode(new BigDecimal(symbol.toString(), mathContext));
                 }
             } else if (preUnaryOperators.contains(symbol)) {
                 expressionNode = new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
@@ -350,9 +343,9 @@ public class Expression extends Observable {
                     // If the node to be added is a number
                     if (numerals.contains(symbol)) {
                         if (symbol.equals(MathSymbol.DECIMAL)){
-                            expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                            expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext));
                         } else {
-                            expressionNode = new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
+                            expressionNode = new NumberNode(new BigDecimal(symbol.toString(), mathContext));
                         }
                     }
                     // If the node to be added is a PreUnary Operator that can be chained
@@ -374,9 +367,9 @@ public class Expression extends Observable {
                     // If the node to be added is a number
                     if (numerals.contains(symbol)) {
                         if (symbol.equals(MathSymbol.DECIMAL)){
-                            expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext), decimalFormat);
+                            expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext));
                         } else {
-                            expressionNode = new NumberNode(new BigDecimal(symbol.toString(), mathContext), decimalFormat);
+                            expressionNode = new NumberNode(new BigDecimal(symbol.toString(), mathContext));
                         }
                     }
                     // If the node to be added is a Pre Unary Operator
