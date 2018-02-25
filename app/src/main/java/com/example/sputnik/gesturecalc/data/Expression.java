@@ -5,7 +5,9 @@ import android.support.annotation.NonNull;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.util.EnumSet;
+import java.util.LinkedList;
 import java.util.Observable;
 
 /**
@@ -13,19 +15,21 @@ import java.util.Observable;
  */
 
 public class Expression extends Observable {
+    private static final int PRECISION = 12;
     public static EnumSet<MathSymbol> numerals = EnumSet.range(MathSymbol.ZERO, MathSymbol.DECIMAL);
     private static EnumSet<MathSymbol> preUnaryOperators = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
-    private static EnumSet<MathSymbol> postUnaryOperators = EnumSet.of(MathSymbol.PERCENT, MathSymbol.NEGATE);
+    private static EnumSet<MathSymbol> negationOperators = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
+    private static EnumSet<MathSymbol> postUnaryOperators = EnumSet.of(MathSymbol.PERCENT);
     private static EnumSet<MathSymbol> binaryOperators = EnumSet.range(MathSymbol.PLUS, MathSymbol.DIVIDE);
     private static EnumSet<MathSymbol> noChaining = EnumSet.of(MathSymbol.MINUS, MathSymbol.NEGATE);
-    private static EnumSet<MathSymbol> toggle = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
+    private static EnumSet<MathSymbol> negation = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
     private static EnumSet<MathSymbol> groupingOperators = EnumSet.range(MathSymbol.LEFT_PARENTHESIS, MathSymbol.UNSPECIFIED_PARENTHESIS);
-    private ExpressionNode head;
-    private ExpressionNode previous;
+    private ExpressionNode head, tail;
+    private LinkedList<ExpressionNode> negStack = new LinkedList<>();
     private StringBuilder numberBuilder = new StringBuilder();
-    private MathContext mathContext = new MathContext(12, RoundingMode.HALF_EVEN);
+    private MathContext mathContext = new MathContext(PRECISION, RoundingMode.HALF_EVEN);
     private int groupLevel = 0;
-    // Used for early breaking out of previous
+    // Used for early breaking out of tail
     private boolean foundPrevious = false;
 
     private static abstract class ExpressionNode {
@@ -231,33 +235,48 @@ public class Expression extends Observable {
 
     public void clear() {
         head = null;
-        previous = null;
+        tail = null;
         numberBuilder.setLength(0);
         groupLevel = 0;
+        negStack.clear();
         setChanged();
         notifyObservers();
     }
 
     public void delete() {
-        if (previous == null){
+        if (tail == null){
+            if (groupLevel > 0){
+                groupLevel--;
+                setChanged();
+                notifyObservers();
+            }
             return;
         }
-        if (groupLevel == previous.nodeGroupLevel){
-            switch (previous.type){
+        if (groupLevel == tail.nodeGroupLevel){
+            switch (tail.type){
                 case NUMBER:
                     deleteNumeral();
                     break;
                 case UNARY_POST:
                 case UNARY_PRE:
                 case BINARY:
-                    deleteNode(previous);
+                    deleteNode(tail);
                     break;
             }
-        } else if (groupLevel < previous.nodeGroupLevel) {
+        } else if (groupLevel < tail.nodeGroupLevel) {
             groupLevel++;
         } else {
             groupLevel--;
         }
+        // Now check to see if same group level with tail and re-enter node if its a number
+        if (tail != null && groupLevel == tail.nodeGroupLevel){
+            if (tail instanceof NumberNode) {
+                numberBuilder.setLength(0);
+                numberBuilder.append(tail.toString());
+            }
+        }
+        setChanged();
+        notifyObservers();
     }
 
     /**
@@ -286,21 +305,26 @@ public class Expression extends Observable {
     }
 
     public String toStringGroupingAsInputted() {
-        if (head == null){
-            return "";
-        }
         StringBuilder stringBuilder = new StringBuilder();
+        if (head == null){
+            if (groupLevel > 0){
+                for (int i = 0; i < groupLevel; i++) {
+                    stringBuilder.append("(");
+                }
+            }
+            return stringBuilder.toString();
+        }
         for (int i = 0; i < head.nodeGroupLevel; i++ ) {
             stringBuilder.append(MathSymbol.LEFT_PARENTHESIS.toString());
         }
         foundPrevious = false;
         treeToStringGroupingAsInputted(head, stringBuilder);
-        if (previous.nodeGroupLevel > groupLevel) {
-            for (int i = previous.nodeGroupLevel; i > groupLevel; i--) {
+        if (tail.nodeGroupLevel > groupLevel) {
+            for (int i = tail.nodeGroupLevel; i > groupLevel; i--) {
                 stringBuilder.append(MathSymbol.RIGHT_PARENTHESIS.toString());
             }
-        } else if (previous.nodeGroupLevel < groupLevel){
-            for (int i = previous.nodeGroupLevel; i < groupLevel; i++) {
+        } else if (tail.nodeGroupLevel < groupLevel){
+            for (int i = tail.nodeGroupLevel; i < groupLevel; i++) {
                 stringBuilder.append(MathSymbol.LEFT_PARENTHESIS.toString());
             }
         }
@@ -319,15 +343,15 @@ public class Expression extends Observable {
         return treeToString(head, new StringBuilder()).toString();
     }
 
-    // TODO make a comment that maps previous to potential
+    // TODO make a comment that maps tail to potential
     ExpressionNode createNode(ExpressionNode previous, MathSymbol symbol) {
         // This class returns the appropriate ExpressionNode subclass based on the
-        // the input symbol and the previous ExpressionNode, which is needed for context.
+        // the input symbol and the tail ExpressionNode, which is needed for context.
 
         ExpressionNode expressionNode = null;
 
-        // First expression node
         if (previous == null) {
+            // First expression node
             if (numerals.contains(symbol)) {
                 if (symbol.equals(MathSymbol.DECIMAL)){
                     expressionNode = new NumberNode(new BigDecimal(MathSymbol.ZERO.toString() + symbol.toString(), mathContext));
@@ -391,6 +415,10 @@ public class Expression extends Observable {
                     break;
             }
         }
+        // Negation operator can always be created...
+        if (expressionNode == null && negationOperators.contains(symbol)) {
+            expressionNode = new UnaryOperatorNode(new UnaryOperatorFactory().getUnaryOperator(symbol), mathContext);
+        }
         if (expressionNode != null){
             expressionNode.nodeGroupLevel = groupLevel;
         }
@@ -405,8 +433,8 @@ public class Expression extends Observable {
                 addNumeral(symbol);
             } else if (groupingOperators.contains(symbol)){
                 handleGroupingSymbol(symbol);
-            } else if (toggle.contains(symbol)){
-                handleToggleSymbol(symbol);
+            } else if (negation.contains(symbol)){
+                handleNegationSymbol(symbol);
             } else {
                 // No special case so just add another node
                 addNode(symbol);
@@ -415,12 +443,13 @@ public class Expression extends Observable {
             System.out.println("attempting to add symbol: " + symbol.toString());
             System.out.println("grouping level: " + groupLevel);
             System.out.println("head: " + head.toString());
-            System.out.println("previous: " + previous.toString());
+            System.out.println("tail: " + tail.toString());
             System.out.println("expression: " + this.toString());
             e.printStackTrace();
         }*/
+
         if (evaluate){
-            evaluateToRoot(previous);
+            evaluateToRoot(tail);
         }
         if (notifyObservers){
             setChanged();
@@ -430,8 +459,8 @@ public class Expression extends Observable {
         if (head != null) {
             System.out.println("head: " + head.toString());
         }
-        if (previous != null) {
-            System.out.println("previous: " + previous.toString());
+        if (tail != null) {
+            System.out.println("tail: " + tail.toString());
         }
         System.out.println("expression: " + this.toString());*/
     }
@@ -440,11 +469,11 @@ public class Expression extends Observable {
         if (!groupingOperators.contains(symbol)){
             throw new IllegalArgumentException("Argument not part of grouping symbols: " + symbol.toString());
         }
-        if (previous == null){
+        if (tail == null){
             groupLevel++;
             return;
         }
-        switch (previous.type){
+        switch (tail.type){
             case BINARY:
             case UNARY_PRE:
                 groupLevel++;
@@ -462,15 +491,39 @@ public class Expression extends Observable {
         }
     }
 
-    private void handleToggleSymbol(MathSymbol symbol){
-        if (!toggle.contains(symbol)){
-            throw new IllegalArgumentException("Argument not part of toggle symbols: " + symbol.toString());
+    private void handleNegationSymbol(MathSymbol symbol) {
+        if (!negation.contains(symbol)) {
+            throw new IllegalArgumentException("Argument not part of negation symbols: " + symbol.toString());
         }
-        if (head !=null && toggle.contains(symbol) && (previous.type.equals(ExpressionNode.ExpressionType.UNARY_PRE))) {
-            // If the symbol undoes the previous symbol (negate)
-            deleteNode(previous);
+        // Check edge cases first
+        // No nodes yet
+        if (head == null){
+            addNode(symbol);
+            return;
+        }
+        ExpressionNode prevNeg = negStack.peekFirst();
+        // Check if tail is already a node
+        if (tail == prevNeg){
+            deleteNode(prevNeg);
+            return;
+        }
+        // Favor subtraction over negation
+        if (symbol.equals(MathSymbol.MINUS) && tail.type.equals(ExpressionNode.ExpressionType.NUMBER)) {
+            addNode(symbol);
+            return;
+        }
+        ExpressionNode posUp = findNegationPosUp();
+        if (posUp == null){
+            addNode(symbol);
+            return;
+        }
+        if (posUp.parent == null){
+            addNode(symbol);
+            return;
+        }
+        if (prevNeg != null && negStack.contains(posUp.parent)){
+            deleteNode(prevNeg);
         } else {
-            // Wasn't actually a toggle symbol. So add it as a node
             addNode(symbol);
         }
     }
@@ -481,32 +534,51 @@ public class Expression extends Observable {
      * @param symbol used to determine which node to add
      */
     private void addNode(MathSymbol symbol) {
-        ExpressionNode node = createNode(previous, symbol);
+        ExpressionNode node = createNode(tail, symbol);
         if (node == null){
             return;
         }
         // First node in expression tree
-        if (previous == null) {
+        if (tail == null) {
             head = node;
-            previous = node;
-            if (numerals.contains(symbol)){
+            tail = node;
+            if (numerals.contains(symbol)) {
                 numberBuilder.append(symbol);
+            } else if (negationOperators.contains(symbol)) {
+//                prevNeg = node;
+                negStack.addFirst(node);
             }
             return;
         }
         switch (node.type){
             case BINARY:
-            case UNARY_PRE:
             case UNARY_POST:
-                ExpressionNode refNode;
-                refNode = findPositionUp(node, previous);
-                insertOperatorNode(node, refNode);
-                previous = node;
+                insertOperatorNode(node, findPositionUp(node, tail));
                 numberBuilder.setLength(0);
+                tail = node;
+                break;
+            case UNARY_PRE:
+                if (negationOperators.contains(symbol)) {
+                    /*ExpressionNode refNode = findNegationPosUp();
+                    if (refNode == null) {
+                        refNode = tail;
+                    }*/
+                    insertNegationNode(node, findNegationPosUp());
+//                    prevNeg = node;
+                    negStack.addFirst(node);
+//                    tail = findNewTail();
+                } else {
+                    insertOperatorNode(node, findPositionUp(node, tail));
+                    tail = node;
+                }
+                numberBuilder.setLength(0);
+                if (tail.type.equals(ExpressionNode.ExpressionType.NUMBER) && tail.nodeGroupLevel == node.nodeGroupLevel){
+                    numberBuilder.append(tail.number.toPlainString());
+                }
                 break;
             case NUMBER:
-                fillNodeBelow(node, previous);
-                previous = node;
+                fillNodeBelow(node, tail);
+                tail = node;
                 numberBuilder.append(symbol);
                 break;
         }
@@ -515,22 +587,25 @@ public class Expression extends Observable {
     private void deleteNumeral(){
         // If numberBuilder wasn't reset, need to reset it
         if (numberBuilder.length() == 0){
-            numberBuilder.append(previous.number.toPlainString());
+            numberBuilder.append(tail.number.toPlainString()); // why plain string?
+//            numberBuilder.append(tail.number.toString());
         }
 
         // Remove a numeral OR the entire node
-        if (previous.type.equals(ExpressionNode.ExpressionType.NUMBER) && numberBuilder.length() > 1){
+        if (tail.type.equals(ExpressionNode.ExpressionType.NUMBER) && numberBuilder.length() > 1){
             numberBuilder.deleteCharAt(numberBuilder.length()-1);
             if (numberBuilder.charAt(numberBuilder.length()-1) == '.'){
                 numberBuilder.deleteCharAt(numberBuilder.length()-1);
             }
-            previous.number = new BigDecimal(numberBuilder.toString(), mathContext);
-            evaluateToRoot(previous);
+            tail.number = new BigDecimal(numberBuilder.toString(), mathContext);
+            evaluateToRoot(tail);
         } else {
-            deleteNode(previous);
+            deleteNode(tail);
             // Reset numberBuilder
-            if (previous != null && previous.type.equals(ExpressionNode.ExpressionType.NUMBER)){
-                numberBuilder.append(previous.number.toPlainString());
+            if (tail != null && tail.type.equals(ExpressionNode.ExpressionType.NUMBER)){
+                numberBuilder.append(tail.number.toPlainString());
+                tail.number.round(mathContext);
+//                numberBuilder.append(tail.number.toString());
             }
         }
     }
@@ -585,7 +660,7 @@ public class Expression extends Observable {
             }
             treeToStringGroupingAsInputted(node.children[1], stringBuilder);
         }
-        if (node.equals(previous)){
+        if (node.equals(tail)){
             foundPrevious = true;
         }
         if (foundPrevious){
@@ -626,25 +701,35 @@ public class Expression extends Observable {
             case BINARY:
             case UNARY_POST:
                 newNode.children[0] = pushedNode;
-                newNode.parent = pushedNode.parent;
-                pushedNode.parent = newNode;
-                if (newNode.parent == null){
-                    head = newNode;
-                } else {
-                    int i;
-                    for(i = 0; i < newNode.parent.children.length; i++){
-                        if (newNode.parent.children[i] != null){
-                            if (newNode.parent.children[i].equals(pushedNode)){
-                                break;
-                            }
-                        }
-                    }
-                    newNode.parent.children[i] = newNode;
-                }
                 break;
             case UNARY_PRE:
-                fillNodeBelow(newNode, pushedNode);
+                newNode.children[1] = pushedNode;
                 break;
+        }
+        newNode.parent = pushedNode.parent;
+        pushedNode.parent = newNode;
+        if (newNode.parent == null){
+            head = newNode;
+        } else {
+            int i;
+            for(i = 0; i < newNode.parent.children.length; i++){
+                if (newNode.parent.children[i] != null){
+                    if (newNode.parent.children[i].equals(pushedNode)){
+                        break;
+                    }
+                }
+            }
+            newNode.parent.children[i] = newNode;
+        }
+    }
+
+    private void insertNegationNode(ExpressionNode newNode, ExpressionNode pushedNode){
+        // At the tail
+        if (pushedNode == null){
+            fillNodeBelow(newNode, tail);
+            tail = newNode;
+        } else {
+            insertOperatorNode(newNode, pushedNode);
         }
     }
 
@@ -666,6 +751,9 @@ public class Expression extends Observable {
             return runner;
         }
         while (node.nodeGroupLevel < runner.nodeGroupLevel) {
+            if (node.nodeGroupLevel >= runner.parent.nodeGroupLevel) {
+                return runner;
+            }
             runner = runner.parent;
             if (runner.parent == null) {
                 return runner;
@@ -675,9 +763,53 @@ public class Expression extends Observable {
             if (runner.nodeGroupLevel > runner.parent.nodeGroupLevel){
                 break;
             }
+            if (node.nodeGroupLevel > runner.nodeGroupLevel){
+                break;
+            }
             runner = runner.parent;
             if (runner.parent == null) {
                 break;
+            }
+        }
+        return runner;
+    }
+
+    // Returns child of most previous possible negation position
+    private ExpressionNode findNegationPosUp(){
+        ExpressionNode runner = tail;
+        // runner is null - no first node yet
+        if (runner == null){
+            return null;
+        }
+        // tail is already negation node
+        /*if (negationOperators.contains(MathSymbol.fromString(runner.toString()))){
+            return null;
+        }*/
+        // runner is root
+        /*if (runner.parent == null){
+            return runner;
+        }*/
+        if (groupLevel < runner.nodeGroupLevel){
+            if (runner.parent == null) {
+                return runner;
+            }
+            while (groupLevel < runner.parent.nodeGroupLevel) {
+                runner = runner.parent;
+                if (runner.parent == null) {
+                    return runner;
+                }
+            }
+        } else {
+            switch (runner.type){
+                case NUMBER:
+//                    break;
+                case UNARY_POST:
+//                    runner = runner.parent;
+                    break;
+                case BINARY:
+                case UNARY_PRE:
+                    runner = null;
+                    break;
             }
         }
         return runner;
@@ -691,9 +823,9 @@ public class Expression extends Observable {
      * @throws IllegalArgumentException if the reference node already had a child
      */
     private void fillNodeBelow(@NonNull ExpressionNode newNode, ExpressionNode refNode) {
-        if (refNode == null){
-            refNode = previous;
-        }
+        /*if (refNode == null){
+            refNode = tail;
+        }*/
         switch (refNode.type){
             case BINARY:
             case UNARY_PRE:
@@ -719,8 +851,10 @@ public class Expression extends Observable {
           // Need a new node first
             addNode(symbol);
         } else {
-            numberBuilder.append(symbol);
-            previous.number = new BigDecimal(numberBuilder.toString(), mathContext);
+            if (numberBuilder.length() < PRECISION) {
+                numberBuilder.append(symbol);
+                tail.number = new BigDecimal(numberBuilder.toString(), mathContext);
+            }
         }
     }
 
@@ -754,10 +888,22 @@ public class Expression extends Observable {
      */
     private void deleteNode(@NonNull ExpressionNode node) {
 
-        // If deleting the previous node, need to find next oldest previous node
-        if (previous.equals(node)) {
-            previous = findNextOldestNode(previous);
+        // If deleting the tail node, need to find next oldest tail node
+        if (tail.equals(node)) {
+            tail = findNextOldestNode(tail);
         }
+
+        // Re-enter number node if that is new tail
+        if (tail != null && tail.type.equals(ExpressionNode.ExpressionType.NUMBER)) {
+            numberBuilder.setLength(0);
+            numberBuilder.append(tail.number.toPlainString());
+//            numberBuilder.append(tail.number.toString());
+        }
+
+        // Since no early escapes, this is safe here
+        // Also, this is a safe call because the node is only
+        // removed from the stack if the stack contains the node
+        negStack.remove(node);
 
         boolean isRoot = node.parent == null;
         // Stitch surrounding nodes together
@@ -820,7 +966,7 @@ public class Expression extends Observable {
         }
         // delete node
         node = null;
-        evaluateToRoot(previous);
+        evaluateToRoot(tail);
     }
 
     /**
@@ -874,5 +1020,19 @@ public class Expression extends Observable {
         }
         node.evaluate();
         evaluateToRoot(node.parent);
+    }
+
+    private ExpressionNode findNewTail() {
+        return postOrderRLSearch(tail);
+    }
+
+    private ExpressionNode postOrderRLSearch(ExpressionNode start) {
+        if (start.children[1] != null){
+            return postOrderRLSearch(start.children[1]);
+        } else if (start.children[0] != null) {
+            return postOrderRLSearch(start.children[0]);
+        } else {
+            return start;
+        }
     }
 }

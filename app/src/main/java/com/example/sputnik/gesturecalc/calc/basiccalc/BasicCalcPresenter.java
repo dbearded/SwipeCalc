@@ -40,6 +40,7 @@ class BasicCalcPresenter implements Observer, BasicCalcContract.Presenter {
                 break;
             case "\u00b1":
                 expression.add(MathSymbol.fromString("\u00af"));
+                break;
             case "()":
                 expression.add(MathSymbol.fromString("("));
                 break;
@@ -54,6 +55,11 @@ class BasicCalcPresenter implements Observer, BasicCalcContract.Presenter {
         expression.clear();
         view.updateDisplay("");
         view.updatePreview("");
+    }
+
+    @Override
+    public void delete() {
+        expression.delete();
     }
 
     @Override

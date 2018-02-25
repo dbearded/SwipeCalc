@@ -2,6 +2,7 @@ package com.example.sputnik.gesturecalc.calc.animeditor;
 
 import com.example.sputnik.gesturecalc.data.Expression;
 import com.example.sputnik.gesturecalc.data.MathSymbol;
+import com.example.sputnik.gesturecalc.util.PathActivator;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -68,8 +69,13 @@ class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
 
     private void checkCake(String symbol){
         builder.append(symbol);
-        if (builder.toString().equals(CAKE)){
-            view.showDevOpts();
+        int comparison = builder.length() - CAKE.length();
+        if (comparison == 0){
+            if (builder.toString().equals(CAKE)){
+                view.showDevOpts();
+            } else {
+                clearCake();
+            }
         }
     }
 

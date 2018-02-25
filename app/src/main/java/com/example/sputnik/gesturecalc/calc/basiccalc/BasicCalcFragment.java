@@ -1,16 +1,19 @@
 package com.example.sputnik.gesturecalc.calc.basiccalc;
 
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.sputnik.gesturecalc.R;
@@ -31,6 +34,7 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
     private TextView display, preview;
     private SharedPreferences sharedPref;
     private ButtonGrid buttonGrid;
+    private ImageView delete;
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
@@ -50,6 +54,7 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
         buttonGrid = root.findViewById(R.id.gridLayout);
         display = root.findViewById(R.id.display);
         preview = root.findViewById(R.id.preview);
+        delete = root.findViewById(R.id.delete);
         Button designEditor = root.findViewById(R.id.buttonAnimEditor);
 
         PathActivator activator = new PathActivator();
@@ -86,6 +91,16 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
         });
 
         sharedPref = Util.getSharedPrefSettings(getActivity());
+
+        delete.setClickable(true);
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+                vibrator.vibrate(10);
+                presenter.delete();
+            }
+        });
 
         return root;
     }
