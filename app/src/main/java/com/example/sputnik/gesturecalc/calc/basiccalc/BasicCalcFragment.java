@@ -1,18 +1,28 @@
 package com.example.sputnik.gesturecalc.calc.basiccalc;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.method.KeyListener;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -23,6 +33,8 @@ import com.example.sputnik.gesturecalc.util.ButtonGrid;
 import com.example.sputnik.gesturecalc.util.PathActivator;
 import com.example.sputnik.gesturecalc.util.Util;
 
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
+
 /**
  * Created by Sputnik on 2/16/2018.
  */
@@ -31,7 +43,8 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
 
     private BasicCalcContract.Presenter presenter;
     private Animator animator;
-    private TextView display, preview;
+    private TextView preview;
+    private TextView display;
     private SharedPreferences sharedPref;
     private ButtonGrid buttonGrid;
     private ImageView delete;
@@ -102,6 +115,51 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
             }
         });
 
+//        display.onCheckIsTextEditor();
+
+        /*display.setOnTouchListener(new TextView.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+//                hideKeyboard();
+                *//*EditText text = (EditText) v;
+                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+//                return v.onTouchEvent(event);
+                v.onTouchEvent(event);
+                return true;*//*
+                *//*if (event.getAction() != MotionEvent.ACTION_UP){
+                    return v.onTouchEvent(event);
+                } else {
+                    return true;
+                }*//*
+
+                *//*int inType = display.getInputType(); // backup the input type
+                display.setInputType(InputType.TYPE_NULL); // disable soft input
+                display.onTouchEvent(event); // call native handler
+                display.setInputType(inType); // restore input type
+                return true; // consume touch event*//*
+            }
+        });*/
+
+        // Works for >= 21 API
+        display.setShowSoftInputOnFocus(false);
+
+        // Doesn't work on my phone (API 24)
+//        display.setRawInputType(InputType.TYPE_CLASS_TEXT);
+//        display.setFocusable(true);
+
+//        display
+
+//        display.setKeyListener(null);
+//        display.setFocusable(false);
+        /*display.setInputType(InputType.TYPE_NULL);
+        display.setRawInputType(InputType.TYPE_CLASS_TEXT);*/
+//        display.setRawInputType(InputType.TYPE_NULL);
+//        display.setFocusable(true);
+        /*final InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);*/
+//        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
         return root;
     }
 
@@ -111,6 +169,11 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
         animator = Animator.changeSettings(animator, Util.loadAnimatorSettings(getActivity()));
         buttonGrid.setPathAnimator(animator);
         sharedPref.registerOnSharedPreferenceChangeListener(this);
+        /*getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        InputMethodManager inputManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+
+        IBinder binder = display.getWindowToken();
+        inputManager.hideSoftInputFromWindow(binder, InputMethodManager.HIDE_NOT_ALWAYS);*/
     }
 
     @Override
@@ -123,10 +186,18 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
     @Override
     public void updateDisplay(String expression) {
         display.setText(expression);
+        display.append("");
     }
 
     @Override
     public void updatePreview(String expression) {
         preview.setText(expression);
     }
+
+    /*private void hideKeyboard(){
+        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+//        imm.toggleSoftInputFromWindow();
+//        imm.hideSoftInputFromInputMethod();
+    }*/
 }

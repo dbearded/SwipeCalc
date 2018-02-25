@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.text.NumberFormat;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.Observable;
@@ -15,7 +14,7 @@ import java.util.Observable;
  */
 
 public class Expression extends Observable {
-    private static final int PRECISION = 12;
+    private static final int PRECISION = 14;
     public static EnumSet<MathSymbol> numerals = EnumSet.range(MathSymbol.ZERO, MathSymbol.DECIMAL);
     private static EnumSet<MathSymbol> preUnaryOperators = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
     private static EnumSet<MathSymbol> negationOperators = EnumSet.of(MathSymbol.NEGATE, MathSymbol.MINUS);
@@ -241,6 +240,27 @@ public class Expression extends Observable {
         negStack.clear();
         setChanged();
         notifyObservers();
+    }
+
+    public void clear(boolean keepHead, boolean notify){
+        if (keepHead) {
+            if (head.number != null) {
+                ExpressionNode tempHead = new NumberNode(head.number);
+                head = null;
+                head = tempHead;
+                tail = tempHead;
+                numberBuilder.setLength(0);
+                numberBuilder.append(head.number.toString());
+                groupLevel = 0;
+                negStack.clear();
+                setChanged();
+                if (notify) {
+                    notifyObservers();
+                }
+            }
+        } else {
+            clear();
+        }
     }
 
     public void delete() {

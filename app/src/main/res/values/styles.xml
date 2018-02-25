@@ -51,6 +51,9 @@
         <item name="colorAccent">#bcbcbc</item>-->
     </style>
 
+    <style name="Custom" parent="@android:style/Widget.EditText">
+    </style>
+
     <dimen name="TextAnimEditor">18dp</dimen>
 
 </resources>

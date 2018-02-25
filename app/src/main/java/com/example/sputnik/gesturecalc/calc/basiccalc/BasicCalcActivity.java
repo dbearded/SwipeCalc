@@ -4,6 +4,7 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.WindowManager;
 
 import com.example.sputnik.gesturecalc.R;
 
@@ -15,6 +16,8 @@ public class BasicCalcActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.act_basic_calc);
+
+//        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
         BasicCalcFragment fragment = (BasicCalcFragment) getFragmentManager().findFragmentById(R.id.BasicCalcFragmentContainer);
         if (fragment == null) {

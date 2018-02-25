@@ -43,8 +43,11 @@ class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
                 clearCake();
                 break;
             case "=":
-                view.updateDisplay(expression.getValue());
-                view.updatePreview("");
+                if (!expression.getValue().isEmpty()) {
+                    expression.clear(true, false);
+                    view.updateDisplay(expression.getValue());
+                    view.updatePreview("");
+                }
                 clearCake();
                 break;
             case "\u00b1":

@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.sputnik.gesturecalc.calc.basiccalc.BasicCalcActivity">
+
+    <view class="com.example.sputnik.gesturecalc.util.ButtonGridCompat"
+        android:id="@+id/gridLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/colorPrimary"
+        android:alignmentMode="alignBounds"
+        android:columnCount="4"
+        android:columnOrderPreserved="true"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        android:orientation="horizontal"
+        android:rowCount="5"
+        android:rowOrderPreserved="true"
+        android:useDefaultMargins="false">
+
+        <TextView
+            android:id="@+id/clear"
+            style="@style/CalcButton.Operator.ReducedSize"
+            android:textColor="#F4511E"
+            android:clickable="true"
+            android:textStyle="bold"
+            android:text="@string/clear"
+            app:layout_column="0"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="0"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/parentheses"
+            style="@style/CalcButton.Operator.ReducedSize"
+            android:text="@string/parentheses"
+            android:textSize="18dp"
+            app:layout_column="1"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="0"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/percent"
+            style="@style/CalcButton.Operator.ReducedSize"
+            android:text="@string/percent"
+            app:layout_column="2"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="0"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/divide"
+            style="@style/CalcButton.Operator"
+            android:text="@string/divide"
+            app:layout_column="3"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="0"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_7"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_7"
+            app:layout_column="0"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="1"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_8"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_8"
+            app:layout_column="1"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="1"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_9"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_9"
+            app:layout_column="2"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="1"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/times"
+            style="@style/CalcButton.Operator"
+            android:text="@string/times"
+            app:layout_column="3"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="1"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_4"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_4"
+            app:layout_column="0"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="2"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_5"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_5"
+            app:layout_column="1"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="2"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_6"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_6"
+            app:layout_column="2"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="2"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/minus"
+            style="@style/CalcButton.Operator"
+            android:text="@string/minus"
+            app:layout_column="3"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="2"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_1"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_1"
+            app:layout_column="0"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="3"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_2"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_2"
+            app:layout_column="1"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="3"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_3"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_3"
+            app:layout_column="2"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="3"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/plus"
+            style="@style/CalcButton.Operator"
+            android:text="@string/plus"
+            app:layout_column="3"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="3"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/negate"
+            style="@style/CalcButton.Operator"
+            android:text="@string/negate"
+            app:layout_column="0"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="4"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_0"
+            style="@style/CalcButton.Numeral"
+            android:text="@string/number_0"
+            app:layout_column="1"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="4"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/number_."
+            style="@style/CalcButton.Numeral"
+            android:text="@string/decimal"
+            app:layout_column="2"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="4"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+
+        <TextView
+            android:id="@+id/equals"
+            style="@style/CalcButton.Operator"
+            android:background="@android:color/transparent"
+            android:text="@string/equals"
+            android:textColor="@android:color/white"
+            app:layout_column="3"
+            app:layout_columnSpan="1"
+            app:layout_columnWeight="1"
+            app:layout_row="4"
+            app:layout_rowSpan="1"
+            app:layout_rowWeight="1" />
+    </view>
+
+    <ImageView
+        android:id="@+id/delete"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:paddingBottom="14dp"
+        android:paddingTop="14dp"
+        app:layout_constraintBottom_toTopOf="@+id/gridLayout"
+        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/guideline2"
+        app:srcCompat="@drawable/backspace" />
+
+    <TextView
+        android:id="@+id/preview"
+        style="@style/Preview"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="24dp"
+        android:gravity="right|end"
+        android:maxLines="1"
+        app:layout_constraintBottom_toTopOf="@+id/delete"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintLeft_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/display"
+        app:layout_constraintVertical_weight="2"
+        android:text="2500"/>
+
+    <android.support.v7.widget.AppCompatEditText
+        android:id="@+id/display"
+        style="@style/Display"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center|right|end"
+        android:maxLines="4"
+        android:background="@android:color/transparent"
+        android:drawableBottom="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@+id/preview"
+        app:layout_constraintEnd_toEndOf="@+id/preview"
+        app:layout_constraintLeft_toLeftOf="@id/preview"
+        app:layout_constraintStart_toStartOf="@id/preview"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="spread_inside"
+        app:layout_constraintVertical_weight="2"
+        android:text="5x5x100"/>
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.75" />
+
+    <Button
+        android:id="@+id/buttonAnimEditor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
+        android:textAllCaps="false"
+        android:fontFamily="sans-serif-light"
+        android:textStyle="normal"
+        android:text="Animation Editor"
+        app:layout_constraintBottom_toTopOf="@+id/gridLayout"
+        app:layout_constraintStart_toStartOf="parent" />
+</android.support.constraint.ConstraintLayout>

@@ -35,8 +35,11 @@ class BasicCalcPresenter implements Observer, BasicCalcContract.Presenter {
                 clear();
                 break;
             case "=":
-                view.updateDisplay(expression.getValue());
-                view.updatePreview("");
+                if (!expression.getValue().isEmpty()) {
+                    expression.clear(true, false);
+                    view.updateDisplay(expression.getValue());
+                    view.updatePreview("");
+                }
                 break;
             case "\u00b1":
                 expression.add(MathSymbol.fromString("\u00af"));
