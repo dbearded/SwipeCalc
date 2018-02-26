@@ -18,7 +18,7 @@
     <string name="times">\u00d7</string> <!-- alt+0215 (num pad) -->
     <string name="divide">\u00f7</string> <!-- alt+0247 (num pad) -->
     <string name="percent">%</string>
-    <string name="parentheses">()</string>
+    <string name="parentheses">( )</string>
     <string name="clear">C</string>
     <string name="resetDefaults">Reset</string>
     <string name="activationSites">Sites</string>

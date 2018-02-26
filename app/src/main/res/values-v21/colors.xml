@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- For Portal Light theme-->
+    <color name="material_grey_400">#bdbdbd</color>
+    <color name="material_grey_400_light">#efefef</color>
+    <color name="material_grey_400_dark">#8d8d8d</color>
+    <color name="material_light_blue_800">#0277bd</color>
+    <color name="material_light_blue_800_light">#58a5f0</color>
+    <color name="material_light_blue_800_dark">#004c8c</color>
+    <color name="material_black">#000000</color>
+    <color name="material_white">#ffffff</color>
+    <color name="material_deep_orange_600">#F4511E</color>
+    <color name="material_grey_700_mine">#616161</color>
+
+    <!-- For rainy day theme -->
+    <color name="material_grey_600_mine">#757575</color>
+    <color name="material_grey_600_light">#a4a4a4</color>
+    <color name="material_grey_600_dark">#494949</color>
+    <color name="material_blue_700">#1976d2</color>
+    <color name="material_blue_700_light">#63a4ff</color>
+    <color name="material_blue_700_dark">#004ba0</color>
+    <color name="material_grey_100_mine">#F5F5F5</color>
+    <color name="material_grey_200">#EEEEEE</color>
+    <color name="material_grey_300_mine">#E0E0E0</color>
+    <color name="material_grey_800_mine">#424242</color>
+
+    <color name="appcompat_dark_grey">#80000000</color>
+    <color name="appcompat_light_grey">#4Dffffff</color>
+</resources>

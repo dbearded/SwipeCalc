@@ -4,16 +4,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    style="@style/DisplayBackground"
     tools:context="com.example.sputnik.gesturecalc.calc.basiccalc.BasicCalcActivity">
 
     <view class="com.example.sputnik.gesturecalc.util.ButtonGridCompat"
         android:id="@+id/gridLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/colorPrimary"
         android:alignmentMode="alignBounds"
         android:columnCount="4"
         android:columnOrderPreserved="true"
+        style="@style/ButtonGrid"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -26,10 +27,8 @@
 
         <TextView
             android:id="@+id/clear"
-            style="@style/CalcButton.Operator.ReducedSize"
-            android:textColor="#F4511E"
+            style="@style/CalcButton.Operator.ReducedSize.Clear"
             android:clickable="true"
-            android:textStyle="bold"
             android:text="@string/clear"
             app:layout_column="0"
             app:layout_columnSpan="1"
@@ -40,9 +39,8 @@
 
         <TextView
             android:id="@+id/parentheses"
-            style="@style/CalcButton.Operator.ReducedSize"
+            style="@style/CalcButton.Operator.Parenthesis"
             android:text="@string/parentheses"
-            android:textSize="18dp"
             app:layout_column="1"
             app:layout_columnSpan="1"
             app:layout_columnWeight="1"
@@ -239,10 +237,8 @@
 
         <TextView
             android:id="@+id/equals"
-            style="@style/CalcButton.Operator"
-            android:background="@android:color/transparent"
+            style="@style/CalcButton.Operator.Equals"
             android:text="@string/equals"
-            android:textColor="@android:color/white"
             app:layout_column="3"
             app:layout_columnSpan="1"
             app:layout_columnWeight="1"
@@ -287,13 +283,11 @@
 
     <android.support.v7.widget.AppCompatEditText
         android:id="@+id/display"
-        style="@style/Display"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:gravity="center|right|end"
         android:maxLines="4"
-        android:background="@android:color/transparent"
-        android:drawableBottom="@color/colorPrimary"
+        style="@style/Display"
         app:layout_constraintBottom_toTopOf="@+id/preview"
         app:layout_constraintEnd_toEndOf="@+id/preview"
         app:layout_constraintLeft_toLeftOf="@id/preview"
@@ -301,7 +295,8 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="spread_inside"
         app:layout_constraintVertical_weight="2"
-        android:text="5x5x100"/>
+        android:text="5x5x100"
+        tools:text="5x5x100"/>
 
     <android.support.constraint.Guideline
         android:id="@+id/guideline2"
@@ -312,6 +307,7 @@
 
     <Button
         android:id="@+id/buttonAnimEditor"
+        style="@style/AnimButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"

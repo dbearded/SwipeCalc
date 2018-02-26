@@ -302,7 +302,7 @@
         app:layout_constraintVertical_weight="2"
         android:text="5x5x100"/>
 
-    <Guideline
+    <android.support.constraint.Guideline
         android:id="@+id/guideline2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
