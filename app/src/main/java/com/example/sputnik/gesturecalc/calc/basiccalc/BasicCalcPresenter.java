@@ -44,7 +44,7 @@ class BasicCalcPresenter implements Observer, BasicCalcContract.Presenter {
             case "\u00b1":
                 expression.add(MathSymbol.fromString("\u00af"));
                 break;
-            case "()":
+            case "( )":
                 expression.add(MathSymbol.fromString("("));
                 break;
             default:

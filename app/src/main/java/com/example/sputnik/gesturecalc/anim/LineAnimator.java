@@ -51,7 +51,7 @@ class LineAnimator extends com.example.sputnik.gesturecalc.anim.Animator {
             paint.setStyle(Paint.Style.STROKE);
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_ATOP));
             paint.setStrokeWidth(getStartSize());
-            paint.setColor(Color.parseColor("#a46fa7be"));
+            paint.setColor(Color.parseColor("#F4511E"));
             paint.setAlpha(getOpacity());
         }
 

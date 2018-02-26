@@ -18,12 +18,22 @@
     <color name="material_grey_600_dark">#494949</color>
     <color name="material_blue_700">#1976d2</color>
     <color name="material_blue_700_light">#63a4ff</color>
-    <color name="material_blue_700_dark">#004ba0</color>
+    <color name="material_blue_700_dark">#FF004BA0</color>
     <color name="material_grey_100_mine">#F5F5F5</color>
     <color name="material_grey_200">#EEEEEE</color>
     <color name="material_grey_300_mine">#E0E0E0</color>
     <color name="material_grey_800_mine">#424242</color>
 
     <color name="appcompat_dark_grey">#80000000</color>
-    <color name="appcompat_light_grey">#4Dffffff</color>
+    <color name="appcompat_light_grey">#bcbcbc</color>
+
+    <!-- For Overcast theme -->
+    <color name="material_grey_500">#9E9E9E</color>
+
+    <color name="material_deep_orange_A400">#FF3D00</color>
+    <color name="material_deep_orange_A200">#FF6340</color>
+    <color name="material_deep_orange_A100">#FF9E80</color>
+    <color name="material_light_blue_A100">#80D8FF</color>
+    <color name="material_light_blue_A200">#40C4FF</color>
+    <color name="material_light_blue_900">#01579B</color>
 </resources>

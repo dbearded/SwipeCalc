@@ -8,10 +8,9 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/CalcTheme">
-        <activity android:name=".calc.basiccalc.BasicCalcActivity"
-            android:theme="@style/CalcTheme.RainyDay">
+        android:supportsRtl="false"
+        android:theme="@style/CalcTheme.PortalLightBlue">
+        <activity android:name=".calc.basiccalc.BasicCalcActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

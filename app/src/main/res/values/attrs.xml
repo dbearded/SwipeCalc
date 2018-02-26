@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <attr name="colorPrimaryLight" format="reference"/>
-    <attr name="colorSecondary" format="reference"/>
-    <attr name="colorSecondaryLight" format="reference"/>
-    <attr name="colorSecondaryDark" format="reference"/>
-    <attr name="textColorPrimaryLight" format="reference"/>
-    <attr name="backColor" format="reference"/>
-    <attr name="dispTextColor" format="reference"/>
-    <attr name="prevColor" format="reference" />
-    <attr name="buttonGridBackColor" format="reference"/>
-    <attr name="buttonBackColor" format="reference"/>
-    <attr name="numeralColor" format="reference"/>
-    <attr name="operatorColor" format="reference"/>
-    <attr name="clearColor" format="reference"/>
-    <attr name="equalsBackColor" format="reference"/>
-    <attr name="equalsTextColor" format="reference"/>
-    <attr name="animButtonTextColor" format="reference"/>
+    <attr name="colorPrimaryLight" format="reference|color"/>
+    <attr name="colorSecondary" format="reference|color"/>
+    <attr name="colorSecondaryLight" format="reference|color"/>
+    <attr name="colorSecondaryDark" format="reference|color"/>
+    <attr name="textColorPrimaryLight" format="reference|color"/>
+    <attr name="backColor" format="reference|color"/>
+    <attr name="dispTextColor" format="reference|color"/>
+    <attr name="prevColor" format="reference|color" />
+    <attr name="buttonGridBackColor" format="reference|color"/>
+    <attr name="buttonBackColor" format="reference|color"/>
+    <attr name="numeralColor" format="reference|color"/>
+    <attr name="operatorColor" format="reference|color"/>
+    <attr name="clearColor" format="reference|color"/>
+    <attr name="equalsBackColor" format="reference|color"/>
+    <attr name="equalsTextColor" format="reference|color"/>
+    <attr name="cursorColor" format="reference|color"/>
+    <attr name="animButtonTextColor" format="reference|color"/>
+    <attr name="animButtonColor" format="reference|color"/>
+    <attr name="editorColors" format="reference|color"/>
 </resources>

@@ -1,9 +1,12 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <style name="CalcTheme" parent="Theme.Design.Light.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
     </style>
 
     <style name="CalcTheme.PortalLight">
+        <item name="colorAccent">@color/material_light_blue_800</item>
         <item name="backColor">@color/material_white</item>
         <item name="dispTextColor">@color/material_black</item>
         <item name="prevColor">@color/material_grey_400_dark</item>
@@ -14,36 +17,102 @@
         <item name="clearColor">@color/material_deep_orange_600</item>
         <item name="equalsBackColor">@color/material_light_blue_800</item>
         <item name="equalsTextColor">@color/material_grey_400_light</item>
+        <item name="animButtonTextColor">?android:textColorPrimary</item>
+        <item name="animButtonColor">@color/material_white</item>
+        <item name="editorColors">@color/material_grey_300_mine</item>
     </style>
 
+    <style name="CalcTheme.PortalLightBlue">
+        <item name="colorAccent">@color/material_light_blue_A200</item>
+        <item name="colorPrimary">@color/material_light_blue_800</item>
+        <item name="colorPrimaryDark">@color/material_black</item>
+        <item name="backColor">@color/material_light_blue_800</item>
+        <item name="dispTextColor">@color/material_white</item>
+        <item name="prevColor">@color/material_grey_300_mine</item>
+        <item name="buttonGridBackColor">@color/material_grey_400_dark</item>
+        <item name="buttonBackColor">@color/material_white</item>
+        <item name="numeralColor">@color/material_grey_700_mine</item>
+        <item name="operatorColor">@color/material_light_blue_800</item>
+        <item name="clearColor">@color/material_deep_orange_600</item>
+        <item name="equalsBackColor">@color/material_light_blue_800</item>
+        <item name="equalsTextColor">@color/material_grey_400_light</item>
+        <item name="animButtonTextColor">?android:textColorPrimary</item>
+        <item name="animButtonColor">@color/material_white</item>
+        <item name="editorColors">@color/material_white</item>
+        <item name="cursorColor">@color/material_light_blue_A200</item>
+    </style>
+
+    <style name="CalcTheme.PortalJuxta" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorAccent">@color/material_white</item>
+        <item name="backColor">@android:color/transparent</item>
+        <item name="dispTextColor">@color/material_white</item>
+        <item name="prevColor">@color/appcompat_light_grey</item>
+        <item name="buttonGridBackColor">@color/material_grey_400_dark</item>
+        <item name="buttonBackColor">@color/material_white</item>
+        <item name="numeralColor">@color/material_grey_700_mine</item>
+        <item name="operatorColor">@color/material_light_blue_800</item>
+        <item name="clearColor">@color/material_deep_orange_600</item>
+        <item name="equalsBackColor">@color/material_light_blue_800</item>
+        <item name="equalsTextColor">@color/material_grey_400_light</item>
+        <item name="animButtonTextColor">?android:textColorPrimary</item>
+        <item name="animButtonColor">@color/material_white</item>
+        <item name="editorColors">@color/material_grey_300_mine</item>
+    </style>
+
+
     <style name="CalcTheme.PortalDark" parent="Theme.AppCompat.NoActionBar">
-        <!--<item name="backColor">@color/material_white</item>-->
-        <item name="dispTextColor">@color/appcompat_light_grey</item>
-        <!--<item name="prevColor">@color/material_grey_400_dark</item>-->
+        <item name="colorAccent">@color/material_white</item>
+        <item name="backColor">@android:color/transparent</item>
+        <item name="dispTextColor">@color/material_white</item>
+        <item name="prevColor">@color/appcompat_light_grey</item>
         <item name="buttonGridBackColor">@android:color/transparent</item>
         <item name="buttonBackColor">@color/material_white</item>
         <item name="numeralColor">@color/appcompat_dark_grey</item>
-        <item name="operatorColor">@color/appcompat_dark_grey</item>
+        <item name="operatorColor">@color/material_light_blue_800</item>
         <item name="clearColor">@color/material_deep_orange_600</item>
         <item name="equalsBackColor">@android:color/transparent</item>
         <item name="equalsTextColor">@color/material_white</item>
+        <item name="animButtonTextColor">?android:textColorPrimary</item>
+        <item name="animButtonColor">@color/material_white</item>
+        <item name="editorColors">@color/material_grey_300_mine</item>
+    </style>
+
+    <style name="CalcTheme.PortalDarkBlue" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorAccent">@color/material_light_blue_800</item>
+        <item name="backColor">@android:color/transparent</item>
+        <item name="dispTextColor">@color/material_white</item>
+        <item name="prevColor">@color/appcompat_light_grey</item>
+        <item name="buttonGridBackColor">@android:color/transparent</item>
+        <item name="buttonBackColor">@color/material_white</item>
+        <item name="numeralColor">@color/appcompat_dark_grey</item>
+        <item name="operatorColor">@color/material_light_blue_800</item>
+        <item name="clearColor">@color/material_deep_orange_600</item>
+        <item name="equalsBackColor">@color/material_light_blue_800</item>
+        <item name="equalsTextColor">@color/material_white</item>
+        <item name="animButtonTextColor">?android:textColorPrimary</item>
+        <item name="animButtonColor">@color/material_white</item>
+        <item name="editorColors">@color/material_grey_300_mine</item>
     </style>
 
     <style name="CalcTheme.Overcast">
-        <item name="backColor">@color/material_grey_600_mine</item>
+        <item name="colorAccent">@color/material_blue_700_dark</item>
+        <item name="backColor">@color/material_grey_500</item>
         <item name="dispTextColor">@color/material_black</item>
-        <item name="prevColor">@color/material_grey_300_mine</item>
-        <item name="buttonGridBackColor">@color/material_grey_600_mine</item>
+        <item name="prevColor">@color/material_grey_700_mine</item>
+        <item name="buttonGridBackColor">@color/material_grey_500</item>
         <item name="buttonBackColor">@color/material_grey_200</item>
         <item name="numeralColor">@color/material_grey_800_mine</item>
         <item name="operatorColor">@color/material_blue_700_dark</item>
         <item name="clearColor">@color/material_deep_orange_600</item>
         <item name="equalsBackColor">@color/material_blue_700_dark</item>
         <item name="equalsTextColor">@color/material_white</item>
-        <item name="animButtonTextColor">@color/material_black</item>
+        <item name="animButtonTextColor">?android:textColorPrimary</item>
+        <item name="animButtonColor">@color/material_white</item>
+        <item name="editorColors">@color/material_grey_300_mine</item>
     </style>
 
     <style name="CalcTheme.RainyDay">
+        <item name="colorAccent">@color/material_grey_600_mine</item>
         <item name="backColor">@color/material_black</item>
         <item name="dispTextColor">@color/material_black</item>
         <item name="prevColor">@color/material_grey_300_mine</item>
@@ -54,14 +123,16 @@
         <item name="clearColor">@color/material_deep_orange_600</item>
         <item name="equalsBackColor">@color/material_blue_700_dark</item>
         <item name="equalsTextColor">@color/material_white</item>
-        <item name="animButtonTextColor">@color/material_black</item>
+        <item name="animButtonTextColor">@android:color/primary_text_light</item>
+        <item name="animButtonColor">@color/material_white</item>
+        <item name="editorColors">@color/material_grey_300_mine</item>
     </style>
 
     <style name="DisplayBackground">
         <item name="android:background">?backColor</item>
     </style>
 
-    <style name="Display" parent="@style/TextAppearance.AppCompat.Display1">
+    <style name="Display" parent="TextAppearance.AppCompat.Display1">
         <item name="android:fontFamily">sans-serif-light</item>
         <item name="android:background">@android:color/transparent</item>
         <item name="android:textColor">?dispTextColor</item>
@@ -117,7 +188,18 @@
         <item name="android:textColor">?equalsTextColor</item>
     </style>
 
-    <style name="AnimButton" parent="@style/Widget.AppCompat.Button">
+    <style name="Button" parent="Base.Widget.AppCompat.Button">
+    </style>
+    <style name="Button.AnimEditor" parent="Button">
+        <item name="colorButtonNormal">?attr/animButtonColor</item>
+    </style>
+
+    <style name="AnimButton">
         <item name="android:textColor">?animButtonTextColor</item>
+    </style>
+
+    <style name="EditorLabels" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">?editorColors</item>
+        <item name="android:textSize">@dimen/TextAnimEditor</item>
     </style>
 </resources>

@@ -5,9 +5,9 @@ package com.example.sputnik.gesturecalc.anim;
  */
 
 public class Settings {
-    private float startSize = 16f;
+    private float startSize = 22f;
     private float endSize = 0f;
-    private float spacing = 20f;
+    private float spacing = 26f;
     private int opacity = 164;
     private long duration = 900l;
     private Animator.Type type = Animator.Type.Circle;

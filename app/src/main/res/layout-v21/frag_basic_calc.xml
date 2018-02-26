@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/DisplayBackground"
-    tools:context="com.example.sputnik.gesturecalc.calc.basiccalc.BasicCalcActivity">
+    tools:context="com.example.sputnik.gesturecalc.calc.animeditor.AnimEditorActivity">
 
     <view class="com.example.sputnik.gesturecalc.util.ButtonGridCompat"
         android:id="@+id/gridLayout"
@@ -310,13 +310,13 @@
         style="@style/AnimButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginLeft="8dp"
         android:layout_marginStart="8dp"
-        android:textAllCaps="false"
         android:fontFamily="sans-serif-light"
-        android:textStyle="normal"
         android:text="Animation Editor"
-        app:layout_constraintBottom_toTopOf="@+id/gridLayout"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:textAllCaps="false"
+        android:textStyle="normal"
+        android:theme="@style/Button.AnimEditor"
+        app:layout_constraintBottom_toBottomOf="@+id/delete"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/delete" />
 </android.support.constraint.ConstraintLayout>

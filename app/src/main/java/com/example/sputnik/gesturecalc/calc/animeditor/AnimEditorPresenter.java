@@ -53,7 +53,7 @@ class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
             case "\u00b1":
                 expression.add(MathSymbol.fromString("\u00af"));
                 clearCake();
-            case "()":
+            case "( )":
                 expression.add(MathSymbol.fromString("("));
                 clearCake();
                 break;

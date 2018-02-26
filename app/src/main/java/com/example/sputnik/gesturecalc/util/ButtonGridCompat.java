@@ -61,7 +61,7 @@ public class ButtonGridCompat extends android.support.v7.widget.GridLayout imple
                 float x = ((PointF) arg).x;
                 float y = ((PointF) arg).y;
                 clickChildAt(x, y);
-                animator.addSpecialPoint(x, y);
+//                animator.addSpecialPoint(x, y);
             }
         });
         this.activator.registerViewBoundaryListener(new PathActivator.ViewBoundaryListener() {

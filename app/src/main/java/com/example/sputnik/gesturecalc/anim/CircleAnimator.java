@@ -49,7 +49,7 @@ class CircleAnimator extends com.example.sputnik.gesturecalc.anim.Animator {
             OvalShape circle = new OvalShape();
             circle.resize(diameter, diameter);
             this.shape = new ShapeDrawable(circle);
-            shape.getPaint().setColor(Color.parseColor("#a46fa7be"));
+            shape.getPaint().setColor(Color.parseColor("#F4511E"));
             shape.getPaint().setAlpha(getOpacity());
             this.x = x;
             this.y = y;
@@ -112,14 +112,14 @@ class CircleAnimator extends com.example.sputnik.gesturecalc.anim.Animator {
     }
 
     public void addSpecialPoint(float x, float y){
-        if (inNoDrawRects(x, y)){
+        /*if (inNoDrawRects(x, y)){
             return;
         }
         createCircle(x,y);
         CircleHolder specialCircle = circles.getLast();
         specialCircle.setColor(Color.RED);
         specialCircle.setDiameter(getStartSize());
-        addAnimators();
+        addAnimators();*/
     }
 
     @Override

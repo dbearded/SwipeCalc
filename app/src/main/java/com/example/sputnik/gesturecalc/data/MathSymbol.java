@@ -7,7 +7,7 @@ package com.example.sputnik.gesturecalc.data;
 public enum MathSymbol {
     ZERO("0"), ONE("1"), TWO("2"), THREE("3"), FOUR("4"), FIVE("5"), SIX("6"), SEVEN("7"), EIGHT("8"),
     NINE("9"), DECIMAL("."), PLUS("+"), MINUS("\u2212"), MULTIPLY("\u00d7"), DIVIDE("\u00f7"), PERCENT("%"), NEGATE("\u00af"),
-    LEFT_PARENTHESIS("("), RIGHT_PARENTHESIS(")"), UNSPECIFIED_PARENTHESIS("()");
+    LEFT_PARENTHESIS("("), RIGHT_PARENTHESIS(")"), UNSPECIFIED_PARENTHESIS("( )");
 
     private final String symbol;
 

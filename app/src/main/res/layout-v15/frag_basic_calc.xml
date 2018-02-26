@@ -10,7 +10,6 @@
         android:id="@+id/gridLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/colorPrimary"
         android:alignmentMode="alignBounds"
         android:columnCount="4"
         android:columnOrderPreserved="true"

@@ -106,12 +106,6 @@ public class BasicCalcFragment extends Fragment implements BasicCalcContract.Vie
 
         // Works for >= 21 API
         display.setShowSoftInputOnFocus(false);
-        display.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                updatePreview("yay");
-            }
-        });
 
         return root;
     }
