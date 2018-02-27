@@ -16,6 +16,7 @@ class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
     private StringBuilder builder = new StringBuilder();
     private Expression expression;
     private AnimEditorContract.View view;
+    private boolean prevEquals;
 
     public AnimEditorPresenter(AnimEditorContract.View view) {
         this.view = view;
@@ -49,6 +50,7 @@ class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
                     view.updatePreview("");
                 }
                 clearCake();
+                prevEquals = true;
                 break;
             case "\u00b1":
                 expression.add(MathSymbol.fromString("\u00af"));
@@ -57,7 +59,23 @@ class AnimEditorPresenter implements Observer, AnimEditorContract.Presenter {
                 expression.add(MathSymbol.fromString("("));
                 clearCake();
                 break;
+            case "+":
+            case "\u2212":
+                // minus
+            case "\u00d7":
+                // times
+            case "\u00f7":
+                // divide
+            case "%":
+                // catching all operators
+                expression.add(MathSymbol.fromString(symbol));
+                break;
             default:
+                // numerals only here
+                if (prevEquals){
+                    expression.clear(false, false);
+                    prevEquals = false;
+                }
                 expression.add(MathSymbol.fromString(symbol));
                 checkCake(symbol);
                 break;

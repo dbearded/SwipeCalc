@@ -16,6 +16,7 @@ import java.util.Observer;
 class BasicCalcPresenter implements Observer, BasicCalcContract.Presenter {
     private Expression expression;
     private BasicCalcContract.View view;
+    private boolean prevEquals;
 
     public BasicCalcPresenter(BasicCalcContract.View view){
         this.view = view;
@@ -40,14 +41,32 @@ class BasicCalcPresenter implements Observer, BasicCalcContract.Presenter {
                     view.updateDisplay(expression.getValue());
                     view.updatePreview("");
                 }
+                prevEquals = true;
                 break;
             case "\u00b1":
+                // if plus-minus, then negate
                 expression.add(MathSymbol.fromString("\u00af"));
                 break;
             case "( )":
                 expression.add(MathSymbol.fromString("("));
                 break;
+            case "+":
+            case "\u2212":
+                // minus
+            case "\u00d7":
+                // times
+            case "\u00f7":
+                // divide
+            case "%":
+                // catching all operators
+                expression.add(MathSymbol.fromString(symbol));
+                break;
             default:
+                // numerals only here
+                if (prevEquals){
+                    expression.clear(false, false);
+                    prevEquals = false;
+                }
                 expression.add(MathSymbol.fromString(symbol));
                 break;
         }

@@ -10,13 +10,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
         android:theme="@style/CalcTheme.PortalLightBlue">
-        <activity android:name=".calc.basiccalc.BasicCalcActivity">
+        <activity android:name=".calc.basiccalc.BasicCalcActivity" android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".calc.animeditor.AnimEditorActivity">
+        <activity android:name=".calc.animeditor.AnimEditorActivity" android:screenOrientation="portrait">
         </activity>
     </application>
 

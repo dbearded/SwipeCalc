@@ -168,6 +168,8 @@ class CircleAnimator extends com.example.sputnik.gesturecalc.anim.Animator {
             prevY = y;
             discreteLength = 0;
             newContourPrevAdded = true;
+            createCircle(x, y);
+            addAnimators();
         } else {
             path.lineTo(x,y);
             if (newContourPrevAdded) {

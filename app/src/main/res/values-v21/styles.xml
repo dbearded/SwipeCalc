@@ -136,6 +136,8 @@
         <item name="android:fontFamily">sans-serif-light</item>
         <item name="android:background">@android:color/transparent</item>
         <item name="android:textColor">?dispTextColor</item>
+        <item name="android:focusable">false</item>
+        <item name="android:clickable">false</item>
     </style>
 
     <style name="Preview" parent="@style/TextAppearance.AppCompat.Headline">
