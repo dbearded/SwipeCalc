@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.sputnik.gesturecalc.calc.basiccalc.BasicCalcActivity">
+    tools:context="com.derekbearded.android.swipecalc.calc.basiccalc.BasicCalcActivity">
 
-    <view class="com.example.sputnik.gesturecalc.util.ButtonGridCompat"
+    <view class="com.derekbearded.android.swipecalc.util.ButtonGridCompat"
         android:id="@+id/gridLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"

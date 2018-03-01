@@ -5,9 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/DisplayBackground"
-    tools:context="com.example.sputnik.gesturecalc.calc.animeditor.AnimEditorActivity">
+    tools:context="com.derekbearded.android.swipecalc.calc.animeditor.AnimEditorActivity">
 
-    <view class="com.example.sputnik.gesturecalc.util.ButtonGridCompat"
+    <view class="com.derekbearded.android.swipecalc.util.ButtonGridCompat"
         android:id="@+id/gridLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"

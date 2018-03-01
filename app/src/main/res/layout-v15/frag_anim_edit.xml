@@ -5,11 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/DisplayBackground"
-    tools:context="com.example.sputnik.gesturecalc.calc.basiccalc.BasicCalcActivity">
+    tools:context="com.derekbearded.android.swipecalc.calc.basiccalc.BasicCalcActivity">
 
     <view
         android:id="@+id/gridLayout"
-        class="com.example.sputnik.gesturecalc.util.ButtonGridCompat"
+        class="com.derekbearded.android.swipecalc.util.ButtonGridCompat"
         style="@style/ButtonGrid"
         android:layout_width="0dp"
         android:layout_height="0dp"

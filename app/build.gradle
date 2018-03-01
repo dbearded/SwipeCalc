@@ -1,20 +1,32 @@
 apply plugin: 'com.android.application'
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
+    signingConfigs {
+        config {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
+    }
     compileSdkVersion 27
     defaultConfig {
-        applicationId "com.example.sputnik.gesturecalc"
+        applicationId "com.derekbearded.android.swipecalc"
         minSdkVersion 21
         targetSdkVersion 27
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1.0"
         testInstrumentationRunner "android.support.TestInterface.runner.AndroidJUnitRunner"
         android.defaultConfig.vectorDrawables.useSupportLibrary true
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
         }
         debug {
             jniDebuggable false

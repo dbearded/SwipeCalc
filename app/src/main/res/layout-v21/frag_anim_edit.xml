@@ -5,9 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/DisplayBackground"
-    tools:context="com.example.sputnik.gesturecalc.calc.animeditor.AnimEditorActivity">
+    tools:context="com.derekbearded.android.swipecalc.calc.animeditor.AnimEditorActivity">
 
-    <view class="com.example.sputnik.gesturecalc.util.ButtonGridCompat"
+    <view class="com.derekbearded.android.swipecalc.util.ButtonGridCompat"
         android:id="@+id/gridLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -508,8 +508,7 @@
         android:id="@+id/switchCircleLine"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="12dp"
-        android:layout_marginRight="12dp"
+        android:layout_marginEnd="8dp"
         android:checked="false"
         android:showText="false"
         app:layout_constraintBottom_toTopOf="@+id/seekBarPath"
@@ -518,28 +517,28 @@
 
     <TextView
         android:id="@+id/textViewCircle"
+        style="@style/EditorLabels"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="12dp"
-        android:layout_marginRight="12dp"
+        android:layout_marginEnd="8dp"
         android:gravity="end"
         android:text="Circle"
-        style="@style/EditorLabels"
         app:layout_constraintBottom_toBottomOf="@+id/switchCircleLine"
         app:layout_constraintEnd_toStartOf="@+id/switchCircleLine"
-        app:layout_constraintTop_toTopOf="@+id/switchCircleLine" />
+        app:layout_constraintTop_toTopOf="@+id/switchCircleLine"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/textViewLine"
+        style="@style/EditorLabels"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="24dp"
-        android:layout_marginRight="24dp"
+        android:layout_marginEnd="8dp"
         android:text="Line"
-        style="@style/EditorLabels"
         app:layout_constraintBottom_toBottomOf="@+id/switchCircleLine"
-        app:layout_constraintEnd_toStartOf="@+id/editNumberOpacity"
-        app:layout_constraintTop_toTopOf="@+id/switchCircleLine" />
+        app:layout_constraintEnd_toStartOf="@+id/delete"
+        app:layout_constraintTop_toTopOf="@+id/switchCircleLine"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/textViewPath"
